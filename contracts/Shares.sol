@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 contract Shares {
     mapping(address => uint256) shares;
 
@@ -9,6 +11,9 @@ contract Shares {
     uint256 public dividends;
 
     address[] public stakeholders;
+
+    event DividendsRegistered(uint256 amount);
+    event DividendsReleased(address recipient, uint256 amount);
 
     constructor() {
         totalShares = 0;
@@ -35,5 +40,19 @@ contract Shares {
 
     function addDividends(uint256 _value) public {
         dividends += _value;
+        emit DividendsRegistered(_value);
+    }
+
+    function payDividends() public {
+
+        for (uint index = 0; index < stakeholders.length; index++) {
+            address stakeholder = stakeholders[index];
+            uint256 share = getShare(stakeholder) / totalShares;
+            uint256 amount = share * dividends;
+
+            dividends -= amount;
+
+            emit DividendsReleased(stakeholder, amount);
+        }
     }
 }
