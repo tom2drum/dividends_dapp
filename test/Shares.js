@@ -47,23 +47,38 @@ describe("Shares", function () {
       expect(event.toNumber()).to.equal(DIVIDENDS_AMOUNT);
     });
 
-    it("stakeholder should be able to claim dividends", async function () {
-      const [ firstAccount, secondAccount ] = await ethers.getSigners();
+    describe('claim process', () => {
+      let initialBalance;
+      let newBalance;
+      let event;
+      let secondAccount;
 
-      const initialBalance = await secondAccount.getBalance();
+      beforeEach(async() => {
+        const [ firstAccount, _secondAccount ] = await ethers.getSigners();
+        secondAccount = _secondAccount;
 
-      await contractToken.addStakeholder(firstAccount.address, SHARES.first);
-      await contractToken.addStakeholder(secondAccount.address, SHARES.second);
-      await contractToken.connect(firstAccount).addDividends({ value: 10000 });
-      await contractToken.claimDividends(secondAccount.address);
-      const event = await dividendsReleaseEvent;
+        initialBalance = await secondAccount.getBalance();
 
-      const newBalance = await secondAccount.getBalance();
+        await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+        await contractToken.addStakeholder(secondAccount.address, SHARES.second);
+        await contractToken.connect(firstAccount).addDividends({ value: 10000 });
+        await contractToken.claimDividends(secondAccount.address);
+        event = await dividendsReleaseEvent;
 
-      expect(event.stakeholder).to.equal(secondAccount.address);
-      expect(event.amount).to.equal(2000);
-      expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
+        newBalance = await secondAccount.getBalance();
+      })
+    
+      it("stakeholder should be able to claim dividends", async function () {
+        expect(event.stakeholder).to.equal(secondAccount.address);
+        expect(event.amount).to.equal(2000);
+        expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
+      });
+
+      it.only('stakeholder cannot claim dividends twice', async() => {
+        await expect(contractToken.claimDividends(secondAccount.address)).to.be.revertedWith('Dividends has been already claimed');
+      });
     });
+
   });
 
   describe('stakeholders', () => {

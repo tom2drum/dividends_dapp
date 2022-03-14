@@ -60,8 +60,10 @@ contract Shares {
     function claimDividends(address payable recipient) public {
         Stakeholder memory stakeholder = stakeholders[recipient];
 
+        require(!stakeholder.hasClaimed, "Dividends has been already claimed");
+
         uint256 amountToPay = stakeholder.share * dividendsPool / totalShares;
-        stakeholder.hasClaimed = true;
+        stakeholders[recipient].hasClaimed = true;
 
         (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
