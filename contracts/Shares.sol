@@ -8,6 +8,8 @@ contract Shares {
 
     uint256 public dividends;
 
+    address[] public stakeholders;
+
     constructor() {
         totalShares = 0;
         dividends = 0;
@@ -25,9 +27,10 @@ contract Shares {
         return dividends;
     }
 
-    function addShares(address _holder, uint256 _value) public {
-        shares[_holder] += _value;
+    function addStakeholder(address _stakeholder, uint256 _value) public {
+        shares[_stakeholder] += _value;
         totalShares += _value;
+        stakeholders.push(_stakeholder);
     }
 
     function addDividends(uint256 _value) public {
