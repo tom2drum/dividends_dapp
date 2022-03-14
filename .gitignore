@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+.env
+coverage
+coverage.json
+typechain
+
+#Hardhat files
+cache
+artifacts
