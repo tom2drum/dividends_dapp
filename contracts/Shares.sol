@@ -4,13 +4,16 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract Shares {
-    mapping(address => uint256) shares;
+    struct Stakeholders {
+        mapping(address => uint256) shares;
+        address[] addresses;
+    }
+
+    Stakeholders stakeholders;
 
     uint256 public totalShares;
 
     uint256 public dividends;
-
-    address[] public stakeholders;
 
     event DividendsRegistered(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
@@ -21,7 +24,7 @@ contract Shares {
     }
 
     function getShare(address _holder) public view returns(uint256) {
-        return shares[_holder];
+        return stakeholders.shares[_holder];
     }
 
     function getTotalShares() public view returns(uint256) {
@@ -33,9 +36,9 @@ contract Shares {
     }
 
     function addStakeholder(address _stakeholder, uint256 _value) public {
-        shares[_stakeholder] += _value;
+        stakeholders.shares[_stakeholder] += _value;
         totalShares += _value;
-        stakeholders.push(_stakeholder);
+        stakeholders.addresses.push(_stakeholder);
     }
 
     function addDividends(uint256 _value) public {
@@ -45,8 +48,8 @@ contract Shares {
 
     function payDividends() public {
 
-        for (uint index = 0; index < stakeholders.length; index++) {
-            address stakeholder = stakeholders[index];
+        for (uint index = 0; index < stakeholders.addresses.length; index++) {
+            address stakeholder = stakeholders.addresses[index];
             uint256 share = getShare(stakeholder) / totalShares;
             uint256 amount = share * dividends;
 
