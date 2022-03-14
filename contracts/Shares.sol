@@ -37,6 +37,8 @@ contract Shares {
     }
 
     function addStakeholder(address _address, uint256 _share) public {
+        require(_share != 0, "Share cannot be zero");
+
         if(stakeholders[_address].id == _address) {
             stakeholders[_address].share += _share;
         } else {
@@ -58,12 +60,18 @@ contract Shares {
     }
 
     function claimDividends(address payable recipient) public {
+        require(dividendsPool > 0, "Dividends pool is empty");
+
         Stakeholder memory stakeholder = stakeholders[recipient];
 
-        require(!stakeholder.hasClaimed, "Dividends has been already claimed");
+        require(stakeholder.id == recipient, "There is no such stakeholder");
+        require(!stakeholder.hasClaimed, "Dividends has been already claimed for this address");
 
         uint256 amountToPay = stakeholder.share * dividendsPool / totalShares;
+
         stakeholders[recipient].hasClaimed = true;
+
+        require(amountToPay > 0, "No dividends to pay");
 
         (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 

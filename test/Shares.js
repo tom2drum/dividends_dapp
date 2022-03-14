@@ -47,35 +47,56 @@ describe("Shares", function () {
       expect(event.toNumber()).to.equal(DIVIDENDS_AMOUNT);
     });
 
-    describe('claim process', () => {
+    describe.only('claim process', () => {
       let initialBalance;
       let newBalance;
       let event;
       let secondAccount;
 
-      beforeEach(async() => {
+      async function successfullyClaimDividends() {
         const [ firstAccount, _secondAccount ] = await ethers.getSigners();
         secondAccount = _secondAccount;
-
+  
         initialBalance = await secondAccount.getBalance();
-
+  
         await contractToken.addStakeholder(firstAccount.address, SHARES.first);
         await contractToken.addStakeholder(secondAccount.address, SHARES.second);
         await contractToken.connect(firstAccount).addDividends({ value: 10000 });
         await contractToken.claimDividends(secondAccount.address);
         event = await dividendsReleaseEvent;
-
+  
         newBalance = await secondAccount.getBalance();
-      })
+      }
     
       it("stakeholder should be able to claim dividends", async function () {
+        await successfullyClaimDividends();
+
         expect(event.stakeholder).to.equal(secondAccount.address);
         expect(event.amount).to.equal(2000);
         expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
       });
 
-      it.only('stakeholder cannot claim dividends twice', async() => {
+      it('stakeholder cannot claim dividends twice', async() => {
+        await successfullyClaimDividends();
+
         await expect(contractToken.claimDividends(secondAccount.address)).to.be.revertedWith('Dividends has been already claimed');
+      });
+
+      it('will not release dividends from empty pool', async() => {
+        const [ firstAccount, secondAccount ] = await ethers.getSigners();
+        await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+        await contractToken.addStakeholder(secondAccount.address, SHARES.second);
+
+        await expect(contractToken.claimDividends(secondAccount.address)).to.be.revertedWith('Dividends pool is empty');
+      });
+
+      it('will not pay dividends to unknown stakeholder', async() => {
+        const [ firstAccount, secondAccount, thirdAccount ] = await ethers.getSigners();
+        await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+        await contractToken.addStakeholder(secondAccount.address, SHARES.second);
+        await contractToken.connect(firstAccount).addDividends({ value: 10000 });
+
+        await expect(contractToken.claimDividends(thirdAccount.address)).to.be.revertedWith('There is no such stakeholder');
       });
     });
 
@@ -101,6 +122,12 @@ describe("Shares", function () {
 
       expect(await contractToken.getShare(firstAccount.address)).to.equal(SHARES.first + SHARES.second);
       expect(await contractToken.getTotalShares()).to.equal(SHARES.first + SHARES.second);
+    });
+
+    it('should not register a stakeholder with empty share', async () => {
+      const [ firstAccount ] = await ethers.getSigners();
+
+      await expect(contractToken.addStakeholder(firstAccount.address, 0)).to.be.revertedWith('Share cannot be zero');
     });
   });
 });
