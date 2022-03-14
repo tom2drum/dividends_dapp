@@ -40,19 +40,19 @@ describe("Shares", function () {
 
       await contractToken.addDividends(DIVIDENDS_AMOUNT);
       const event = await dividendsRegistrationEvent;
-      const dividends = await contractToken.getAccumulatedDividends();
+      const dividends = await contractToken.getDividendsPool();
 
       expect(dividends).to.equal(DIVIDENDS_AMOUNT);
       expect(event.toNumber()).to.equal(DIVIDENDS_AMOUNT);
     });
 
-    it.skip("should pay dividends", async function () {
-      const [firstAccount, secondAccount] = await ethers.getSigners();
+    it("stakeholder should be able to claim dividends", async function () {
+      const [ firstAccount, secondAccount ] = await ethers.getSigners();
 
       await contractToken.addStakeholder(firstAccount.address, SHARES.first);
       await contractToken.addStakeholder(secondAccount.address, SHARES.second);
       await contractToken.addDividends(10000);
-      await contractToken.payDividends();
+      await contractToken.claimDividends(firstAccount.address);
       const event = await dividendsReleaseEvent;
 
       expect(event.stakeholder).to.equal(firstAccount.address);

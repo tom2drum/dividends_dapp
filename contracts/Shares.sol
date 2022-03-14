@@ -4,58 +4,65 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract Shares {
-    struct Stakeholders {
-        mapping(address => uint256) shares;
-        address[] addresses;
+    struct Stakeholder {
+        address id;
+        uint256 share;
+        bool hasClaimed;
     }
 
-    Stakeholders stakeholders;
+    mapping(address => Stakeholder) public stakeholders;
 
     uint256 public totalShares;
 
-    uint256 public dividends;
+    uint256 public dividendsPool;
 
     event DividendsRegistered(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
 
     constructor() {
         totalShares = 0;
-        dividends = 0;
+        dividendsPool = 0;
     }
 
     function getShare(address _holder) public view returns(uint256) {
-        return stakeholders.shares[_holder];
+        return stakeholders[_holder].share;
     }
 
     function getTotalShares() public view returns(uint256) {
         return totalShares;
     }
 
-    function getAccumulatedDividends() public view returns(uint256) {
-        return dividends;
+    function getDividendsPool() public view returns(uint256) {
+        return dividendsPool;
     }
 
-    function addStakeholder(address _stakeholder, uint256 _value) public {
-        stakeholders.shares[_stakeholder] += _value;
-        totalShares += _value;
-        stakeholders.addresses.push(_stakeholder);
+    function addStakeholder(address _address, uint256 _share) public {
+        if(stakeholders[_address].id == _address) {
+            stakeholders[_address].share += _share;
+        } else {
+            Stakeholder memory stakeholder = Stakeholder({
+                id: _address,
+                share: _share,
+                hasClaimed: false
+            });
+
+            stakeholders[_address] = stakeholder;
+        }
+
+        totalShares += _share;
     }
 
     function addDividends(uint256 _value) public {
-        dividends += _value;
+        dividendsPool += _value;
         emit DividendsRegistered(_value);
     }
 
-    function payDividends() public {
+    function claimDividends(address recipient) public {
+        Stakeholder memory stakeholder = stakeholders[recipient];
 
-        for (uint index = 0; index < stakeholders.addresses.length; index++) {
-            address stakeholder = stakeholders.addresses[index];
-            uint256 share = getShare(stakeholder) / totalShares;
-            uint256 amount = share * dividends;
+        uint256 amountToPay = stakeholder.share * dividendsPool / totalShares;
+        stakeholder.hasClaimed = true;
 
-            dividends -= amount;
-
-            emit DividendsReleased(stakeholder, amount);
-        }
+        emit DividendsReleased(recipient, amountToPay);
     }
 }
