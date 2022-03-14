@@ -52,16 +52,20 @@ contract Shares {
         totalShares += _share;
     }
 
-    function addDividends(uint256 _value) public {
-        dividendsPool += _value;
-        emit DividendsRegistered(_value);
+    function addDividends() payable external {
+        dividendsPool += msg.value;
+        emit DividendsRegistered(msg.value);
     }
 
-    function claimDividends(address recipient) public {
+    function claimDividends(address payable recipient) public {
         Stakeholder memory stakeholder = stakeholders[recipient];
 
         uint256 amountToPay = stakeholder.share * dividendsPool / totalShares;
         stakeholder.hasClaimed = true;
+
+        (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
+
+        require(sent, "Failed to send dividends");
 
         emit DividendsReleased(recipient, amountToPay);
     }

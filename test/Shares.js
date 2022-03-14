@@ -37,8 +37,9 @@ describe("Shares", function () {
   describe('dividends', () => {
     it("should add dividends to the contract", async function () {
       const DIVIDENDS_AMOUNT = 10000;
+      const [ firstAccount ] = await ethers.getSigners();
 
-      await contractToken.addDividends(DIVIDENDS_AMOUNT);
+      await contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT });
       const event = await dividendsRegistrationEvent;
       const dividends = await contractToken.getDividendsPool();
 
@@ -49,14 +50,19 @@ describe("Shares", function () {
     it("stakeholder should be able to claim dividends", async function () {
       const [ firstAccount, secondAccount ] = await ethers.getSigners();
 
+      const initialBalance = await secondAccount.getBalance();
+
       await contractToken.addStakeholder(firstAccount.address, SHARES.first);
       await contractToken.addStakeholder(secondAccount.address, SHARES.second);
-      await contractToken.addDividends(10000);
-      await contractToken.claimDividends(firstAccount.address);
+      await contractToken.connect(firstAccount).addDividends({ value: 10000 });
+      await contractToken.claimDividends(secondAccount.address);
       const event = await dividendsReleaseEvent;
 
-      expect(event.stakeholder).to.equal(firstAccount.address);
-      expect(event.amount).to.equal(8000);
+      const newBalance = await secondAccount.getBalance();
+
+      expect(event.stakeholder).to.equal(secondAccount.address);
+      expect(event.amount).to.equal(2000);
+      expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
     });
   });
 
