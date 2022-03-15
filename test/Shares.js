@@ -2,84 +2,55 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 const SHARES = { first: 80, second: 20 };
+const DIVIDENDS_AMOUNT = 10000;
 
 let contractToken;
-let dividendsRegistrationEvent;
-let dividendsReleaseEvent;
 
 beforeEach(async() => {
   const Shares = await ethers.getContractFactory("Shares");
   contractToken = await Shares.deploy();
   await contractToken.deployed();
-
-  dividendsRegistrationEvent = new Promise((resolve, reject) => {
-    contractToken.on('DividendsRegistered', (value, event) => {
-      event.removeListener();
-
-      resolve(value);
-    });
-
-    setTimeout(() => reject(new Error('timeout')), 60_000);
-  });
-
-  dividendsReleaseEvent = new Promise((resolve, reject) => {
-    contractToken.on('DividendsReleased', (stakeholder, amount, event) => {
-      event.removeListener();
-
-      resolve({ stakeholder, amount });
-    });
-
-    setTimeout(() => reject(new Error('timeout')), 60_000);
-  });
 })
 
 describe("Shares", function () {
   describe('dividends', () => {
     it("should add dividends to the contract", async function () {
-      const DIVIDENDS_AMOUNT = 10000;
       const [ firstAccount ] = await ethers.getSigners();
 
-      await contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT });
-      const event = await dividendsRegistrationEvent;
-      const dividends = await contractToken.getDividendsPool();
+      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT }))
+        .to.emit(contractToken, 'DividendsRegistered')
+        .withArgs(DIVIDENDS_AMOUNT);
 
+      let dividends = await contractToken.getDividendsPool();
       expect(dividends).to.equal(DIVIDENDS_AMOUNT);
-      expect(event.toNumber()).to.equal(DIVIDENDS_AMOUNT);
+
+      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT }))
+        .to.emit(contractToken, 'DividendsRegistered')
+        .withArgs(DIVIDENDS_AMOUNT);
+
+      dividends = await contractToken.getDividendsPool();
+      expect(dividends).to.equal(2 * DIVIDENDS_AMOUNT);
     });
 
-    describe.only('claim process', () => {
-      let initialBalance;
-      let newBalance;
-      let event;
-      let secondAccount;
-
-      async function successfullyClaimDividends() {
-        const [ firstAccount, _secondAccount ] = await ethers.getSigners();
-        secondAccount = _secondAccount;
-  
-        initialBalance = await secondAccount.getBalance();
-  
-        await contractToken.addStakeholder(firstAccount.address, SHARES.first);
-        await contractToken.addStakeholder(secondAccount.address, SHARES.second);
-        await contractToken.connect(firstAccount).addDividends({ value: 10000 });
-        await contractToken.claimDividends(secondAccount.address);
-        event = await dividendsReleaseEvent;
-  
-        newBalance = await secondAccount.getBalance();
-      }
-    
+    describe('initial claim', () => {
       it("stakeholder should be able to claim dividends", async function () {
-        await successfullyClaimDividends();
+        const { secondAccount } = await registerAccountsAndAddDividends();
+        const initialBalance = await secondAccount.getBalance();
 
-        expect(event.stakeholder).to.equal(secondAccount.address);
-        expect(event.amount).to.equal(2000);
+        await expect(contractToken.claimDividends(secondAccount.address))
+          .to.emit(contractToken, 'DividendsReleased')
+          .withArgs(secondAccount.address, 2000);
+
+        const newBalance = await secondAccount.getBalance();
+
         expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
       });
 
       it('stakeholder cannot claim dividends twice', async() => {
-        await successfullyClaimDividends();
+        const { secondAccount } = await registerAccountsAndAddDividends();
+        await contractToken.claimDividends(secondAccount.address);
 
-        await expect(contractToken.claimDividends(secondAccount.address)).to.be.revertedWith('Dividends has been already claimed');
+        await expect(contractToken.claimDividends(secondAccount.address)).to.be.revertedWith('No dividends to pay');
       });
 
       it('will not release dividends from empty pool', async() => {
@@ -100,6 +71,49 @@ describe("Shares", function () {
       });
     });
 
+    describe('subsequent claims', () => {
+      it('send correct amount on the second claim for the same address', async() => {
+        const { firstAccount, secondAccount } = await registerAccountsAndAddDividends();
+        const initialBalance = await secondAccount.getBalance();
+
+        await contractToken.claimDividends(secondAccount.address);
+        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+
+        await expect(contractToken.claimDividends(secondAccount.address))
+          .to.emit(contractToken, 'DividendsReleased')
+          .withArgs(secondAccount.address, 1000);
+
+        const newBalance = await secondAccount.getBalance();
+        expect(newBalance.sub(initialBalance).toNumber()).to.equal(3000);
+      });
+
+      it('send correct amount on the second claim for another address', async() => {
+        const { firstAccount, secondAccount, thirdAccount } = await registerAccountsAndAddDividends();
+        const initialBalance = await thirdAccount.getBalance();
+
+        await contractToken.claimDividends(secondAccount.address);
+        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+
+        await expect(contractToken.claimDividends(thirdAccount.address))
+          .to.emit(contractToken, 'DividendsReleased')
+          .withArgs(thirdAccount.address, 12000);
+
+        const newBalance = await thirdAccount.getBalance();
+        expect(newBalance.sub(initialBalance).toNumber()).to.equal(12000);
+      });
+
+      it('will empty the pool when all dividends are paid', async() => {
+        const { firstAccount, secondAccount, thirdAccount } = await registerAccountsAndAddDividends();
+
+        await contractToken.claimDividends(secondAccount.address);
+        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+        await contractToken.claimDividends(thirdAccount.address);
+        await contractToken.claimDividends(secondAccount.address);
+
+        const dividendsPool = await contractToken.getDividendsPool();
+        expect(dividendsPool).to.equal(0);
+      });
+    });
   });
 
   describe('stakeholders', () => {
@@ -131,3 +145,13 @@ describe("Shares", function () {
     });
   });
 });
+
+async function registerAccountsAndAddDividends() {
+  const [ firstAccount, secondAccount, thirdAccount ] = await ethers.getSigners();
+
+  await contractToken.addStakeholder(thirdAccount.address, SHARES.first);
+  await contractToken.addStakeholder(secondAccount.address, SHARES.second);
+  await contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT });
+
+  return { firstAccount, secondAccount, thirdAccount };
+}

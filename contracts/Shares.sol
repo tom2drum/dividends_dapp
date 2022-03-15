@@ -7,7 +7,7 @@ contract Shares {
     struct Stakeholder {
         address id;
         uint256 share;
-        bool hasClaimed;
+        uint256 claimedAmount;
     }
 
     mapping(address => Stakeholder) public stakeholders;
@@ -15,6 +15,8 @@ contract Shares {
     uint256 public totalShares;
 
     uint256 public dividendsPool;
+
+    uint256 public dividendsTotal;
 
     event DividendsRegistered(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
@@ -45,7 +47,7 @@ contract Shares {
             Stakeholder memory stakeholder = Stakeholder({
                 id: _address,
                 share: _share,
-                hasClaimed: false
+                claimedAmount: 0
             });
 
             stakeholders[_address] = stakeholder;
@@ -56,6 +58,7 @@ contract Shares {
 
     function addDividends() payable external {
         dividendsPool += msg.value;
+        dividendsTotal += msg.value;
         emit DividendsRegistered(msg.value);
     }
 
@@ -65,14 +68,14 @@ contract Shares {
         Stakeholder memory stakeholder = stakeholders[recipient];
 
         require(stakeholder.id == recipient, "There is no such stakeholder");
-        require(!stakeholder.hasClaimed, "Dividends has been already claimed for this address");
 
-        uint256 amountToPay = stakeholder.share * dividendsPool / totalShares;
-
-        stakeholders[recipient].hasClaimed = true;
+        uint256 amountToPay = stakeholder.share * dividendsTotal / totalShares - stakeholder.claimedAmount;
 
         require(amountToPay > 0, "No dividends to pay");
+        require(amountToPay <= dividendsPool, "Not enought money in the pool");
 
+        stakeholders[recipient].claimedAmount += amountToPay;
+        dividendsPool -= amountToPay;
         (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
         require(sent, "Failed to send dividends");
