@@ -27,6 +27,13 @@ contract Shares {
 
     constructor() {}
 
+    receive() external payable virtual {
+        require(stakeholdersNum > 1, "There is not enough stakeholders yet");
+
+        dividendsTotal += msg.value;
+        emit DividendsRegistered(msg.value);
+    }
+    
     function getShare(address _holder) public view returns(uint256) {
         require(stakeholders[_holder].id == _holder, "There is no such stakeholder");
 
@@ -68,13 +75,6 @@ contract Shares {
         stakeholdersNum++;
     }
 
-    receive() external payable virtual {
-        require(stakeholdersNum > 1, "There is not enough stakeholders yet");
-
-        dividendsTotal += msg.value;
-        emit DividendsRegistered(msg.value);
-    }
-
     function claimDividends(address payable recipient) public {
         dividendsPool = getDividendsPool();
         require(dividendsPool > 0, "Dividends pool is empty");
@@ -83,7 +83,7 @@ contract Shares {
 
         require(stakeholder.id == recipient, "There is no such stakeholder");
 
-        uint256 amountToPay = stakeholder.share * dividendsTotal / totalShares - stakeholder.claimedAmount;
+        uint256 amountToPay = _getAmountToPay(stakeholder);
 
         require(amountToPay > 0, "No dividends to pay");
         require(amountToPay <= dividendsPool, "Not enought money in the pool");
@@ -94,5 +94,9 @@ contract Shares {
         require(sent, "Failed to send dividends");
 
         emit DividendsReleased(recipient, amountToPay);
+    }
+
+    function _getAmountToPay(Stakeholder memory stakeholder) private view returns(uint256) {
+        return stakeholder.share * dividendsTotal / totalShares - stakeholder.claimedAmount;
     }
 }
