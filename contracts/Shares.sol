@@ -18,15 +18,18 @@ contract Shares {
 
     uint256 public dividendsTotal;
 
+    uint public stakeholdersNum;
+
+    event StakeholderRegistered(address _address, uint256 _share);
+    event StakeholdersShareChanged(address _address, uint256 _share);
     event DividendsRegistered(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
 
-    constructor() {
-        totalShares = 0;
-        dividendsPool = 0;
-    }
+    constructor() {}
 
     function getShare(address _holder) public view returns(uint256) {
+        require(stakeholders[_holder].id == _holder, "There is no such stakeholder");
+
         return stakeholders[_holder].share;
     }
 
@@ -40,9 +43,12 @@ contract Shares {
 
     function addStakeholder(address _address, uint256 _share) public {
         require(_share != 0, "Share cannot be zero");
+        require(dividendsPool == 0, "Contract has undistributed dividends");
 
         if(stakeholders[_address].id == _address) {
             stakeholders[_address].share += _share;
+
+            emit StakeholdersShareChanged(_address, stakeholders[_address].share);
         } else {
             Stakeholder memory stakeholder = Stakeholder({
                 id: _address,
@@ -51,12 +57,17 @@ contract Shares {
             });
 
             stakeholders[_address] = stakeholder;
+
+            emit StakeholderRegistered(_address, _share);
         }
 
         totalShares += _share;
+        stakeholdersNum++;
     }
 
     function addDividends() payable external {
+        require(stakeholdersNum > 1, "There is not enough stakeholders yet");
+
         dividendsPool += msg.value;
         dividendsTotal += msg.value;
         emit DividendsRegistered(msg.value);

@@ -12,10 +12,13 @@ beforeEach(async() => {
   await contractToken.deployed();
 })
 
-describe("Shares", function () {
+describe('Shares', function () {
   describe('dividends', () => {
-    it("should add dividends to the contract", async function () {
-      const [ firstAccount ] = await ethers.getSigners();
+    it('should add dividends to the contract', async function () {
+      const [ firstAccount, secondAccount ] = await ethers.getSigners();
+
+      await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+      await contractToken.addStakeholder(secondAccount.address, SHARES.second);
 
       await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT }))
         .to.emit(contractToken, 'DividendsRegistered')
@@ -32,8 +35,18 @@ describe("Shares", function () {
       expect(dividends).to.equal(2 * DIVIDENDS_AMOUNT);
     });
 
+    it('will add dividends only if there is more than one stakeholder', async() => {
+      const [ firstAccount, secondAccount ] = await ethers.getSigners();
+
+      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT })).to.be.revertedWith('There is not enough stakeholders yet');
+      
+      await contractToken.addStakeholder(secondAccount.address, SHARES.second);
+      
+      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT })).to.be.revertedWith('There is not enough stakeholders yet');
+    });
+
     describe('initial claim', () => {
-      it("stakeholder should be able to claim dividends", async function () {
+      it('stakeholder should be able to claim dividends', async function () {
         const { secondAccount } = await registerAccountsAndAddDividends();
         const initialBalance = await secondAccount.getBalance();
 
@@ -120,7 +133,10 @@ describe("Shares", function () {
     it('should register a new stakeholder', async() => {
       const [ firstAccount, secondAccount ] = await ethers.getSigners();
 
-      await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+      await expect(contractToken.addStakeholder(firstAccount.address, SHARES.first))
+        .to.emit(contractToken, 'StakeholderRegistered')
+        .withArgs(firstAccount.address, SHARES.first);
+
       await contractToken.addStakeholder(secondAccount.address, SHARES.second);
 
       expect(await contractToken.getShare(firstAccount.address)).to.equal(SHARES.first);
@@ -132,7 +148,9 @@ describe("Shares", function () {
       const [ firstAccount ] = await ethers.getSigners();
 
       await contractToken.addStakeholder(firstAccount.address, SHARES.first);
-      await contractToken.addStakeholder(firstAccount.address, SHARES.second);
+      await expect(contractToken.addStakeholder(firstAccount.address, SHARES.second))
+        .to.emit(contractToken, 'StakeholdersShareChanged')
+        .withArgs(firstAccount.address, SHARES.first + SHARES.second);
 
       expect(await contractToken.getShare(firstAccount.address)).to.equal(SHARES.first + SHARES.second);
       expect(await contractToken.getTotalShares()).to.equal(SHARES.first + SHARES.second);
@@ -142,6 +160,24 @@ describe("Shares", function () {
       const [ firstAccount ] = await ethers.getSigners();
 
       await expect(contractToken.addStakeholder(firstAccount.address, 0)).to.be.revertedWith('Share cannot be zero');
+    });
+
+    it('should not register a stakeholder if not all dividends were distributed', async () => {
+      const { secondAccount } = await registerAccountsAndAddDividends();
+
+      await expect(contractToken.addStakeholder(secondAccount.address, 30)).to.be.revertedWith('Contract has undistributed dividends');
+
+      expect(await contractToken.getShare(secondAccount.address)).to.equal(SHARES.second);
+    });
+  });
+
+  describe('share', () => {
+    it('will not return shares for unknown stakeholder', async() => {
+      const [ firstAccount, secondAccount ] = await ethers.getSigners();
+
+      await contractToken.addStakeholder(firstAccount.address, SHARES.first);
+
+      await expect(contractToken.getShare(secondAccount.address)).to.be.revertedWith('There is no such stakeholder');
     });
   });
 });
