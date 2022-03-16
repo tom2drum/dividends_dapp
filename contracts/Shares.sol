@@ -38,11 +38,14 @@ contract Shares {
     }
 
     function getDividendsPool() public view returns(uint256) {
-        return dividendsPool;
+        return address(this).balance;
     }
 
     function addStakeholder(address _address, uint256 _share) public {
         require(_share != 0, "Share cannot be zero");
+
+        dividendsPool = getDividendsPool();
+
         require(dividendsPool == 0, "Contract has undistributed dividends");
 
         if(stakeholders[_address].id == _address) {
@@ -65,15 +68,15 @@ contract Shares {
         stakeholdersNum++;
     }
 
-    function addDividends() payable external {
+    receive() external payable virtual {
         require(stakeholdersNum > 1, "There is not enough stakeholders yet");
 
-        dividendsPool += msg.value;
         dividendsTotal += msg.value;
         emit DividendsRegistered(msg.value);
     }
 
     function claimDividends(address payable recipient) public {
+        dividendsPool = getDividendsPool();
         require(dividendsPool > 0, "Dividends pool is empty");
 
         Stakeholder memory stakeholder = stakeholders[recipient];
@@ -86,7 +89,6 @@ contract Shares {
         require(amountToPay <= dividendsPool, "Not enought money in the pool");
 
         stakeholders[recipient].claimedAmount += amountToPay;
-        dividendsPool -= amountToPay;
         (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
         require(sent, "Failed to send dividends");

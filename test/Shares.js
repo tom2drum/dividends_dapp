@@ -20,29 +20,34 @@ describe('Shares', function () {
       await contractToken.addStakeholder(firstAccount.address, SHARES.first);
       await contractToken.addStakeholder(secondAccount.address, SHARES.second);
 
-      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT }))
+      let tr = firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
+
+      await expect(tr)
         .to.emit(contractToken, 'DividendsRegistered')
         .withArgs(DIVIDENDS_AMOUNT);
 
       let dividends = await contractToken.getDividendsPool();
       expect(dividends).to.equal(DIVIDENDS_AMOUNT);
 
-      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT }))
+      tr = firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
+      await expect(tr)
         .to.emit(contractToken, 'DividendsRegistered')
         .withArgs(DIVIDENDS_AMOUNT);
 
       dividends = await contractToken.getDividendsPool();
-      expect(dividends).to.equal(2 * DIVIDENDS_AMOUNT);
+      expect(dividends).to.equal(DIVIDENDS_AMOUNT * 2);
     });
 
     it('will add dividends only if there is more than one stakeholder', async() => {
       const [ firstAccount, secondAccount ] = await ethers.getSigners();
 
-      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT })).to.be.revertedWith('There is not enough stakeholders yet');
+      let tr = firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
+      await expect(tr).to.be.revertedWith('There is not enough stakeholders yet');
       
       await contractToken.addStakeholder(secondAccount.address, SHARES.second);
       
-      await expect(contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT })).to.be.revertedWith('There is not enough stakeholders yet');
+      tr = firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
+      await expect(tr).to.be.revertedWith('There is not enough stakeholders yet');
     });
 
     describe('initial claim', () => {
@@ -52,11 +57,11 @@ describe('Shares', function () {
 
         await expect(contractToken.claimDividends(secondAccount.address))
           .to.emit(contractToken, 'DividendsReleased')
-          .withArgs(secondAccount.address, 2000);
+          .withArgs(secondAccount.address, DIVIDENDS_AMOUNT * 0.2);
 
         const newBalance = await secondAccount.getBalance();
 
-        expect(newBalance.sub(initialBalance).toNumber()).to.equal(2000);
+        expect(newBalance.sub(initialBalance).toNumber()).to.equal(DIVIDENDS_AMOUNT * 0.2);
       });
 
       it('stakeholder cannot claim dividends twice', async() => {
@@ -78,7 +83,7 @@ describe('Shares', function () {
         const [ firstAccount, secondAccount, thirdAccount ] = await ethers.getSigners();
         await contractToken.addStakeholder(firstAccount.address, SHARES.first);
         await contractToken.addStakeholder(secondAccount.address, SHARES.second);
-        await contractToken.connect(firstAccount).addDividends({ value: 10000 });
+        await firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
 
         await expect(contractToken.claimDividends(thirdAccount.address)).to.be.revertedWith('There is no such stakeholder');
       });
@@ -90,7 +95,7 @@ describe('Shares', function () {
         const initialBalance = await secondAccount.getBalance();
 
         await contractToken.claimDividends(secondAccount.address);
-        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+        await firstAccount.sendTransaction({ to: contractToken.address, value: 5000 });
 
         await expect(contractToken.claimDividends(secondAccount.address))
           .to.emit(contractToken, 'DividendsReleased')
@@ -105,7 +110,7 @@ describe('Shares', function () {
         const initialBalance = await thirdAccount.getBalance();
 
         await contractToken.claimDividends(secondAccount.address);
-        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+        await firstAccount.sendTransaction({ to: contractToken.address, value: 5000 });
 
         await expect(contractToken.claimDividends(thirdAccount.address))
           .to.emit(contractToken, 'DividendsReleased')
@@ -119,7 +124,7 @@ describe('Shares', function () {
         const { firstAccount, secondAccount, thirdAccount } = await registerAccountsAndAddDividends();
 
         await contractToken.claimDividends(secondAccount.address);
-        await contractToken.connect(firstAccount).addDividends({ value: 5000 });
+        await firstAccount.sendTransaction({ to: contractToken.address, value: 5000 });
         await contractToken.claimDividends(thirdAccount.address);
         await contractToken.claimDividends(secondAccount.address);
 
@@ -187,7 +192,7 @@ async function registerAccountsAndAddDividends() {
 
   await contractToken.addStakeholder(thirdAccount.address, SHARES.first);
   await contractToken.addStakeholder(secondAccount.address, SHARES.second);
-  await contractToken.connect(firstAccount).addDividends({ value: DIVIDENDS_AMOUNT });
+  await firstAccount.sendTransaction({ to: contractToken.address, value: DIVIDENDS_AMOUNT });
 
   return { firstAccount, secondAccount, thirdAccount };
 }
