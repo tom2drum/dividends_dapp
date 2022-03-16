@@ -1,17 +1,17 @@
-const hre = require("hardhat");
+const hre = require('hardhat');
 
 async function main() {
-  const Shares = await hre.ethers.getContractFactory("Shares");
-  const sharesToken = await Shares.deploy();
+	const Shares = await hre.ethers.getContractFactory('Shares');
+	const sharesToken = await Shares.deploy();
 
-  await sharesToken.deployed();
+	await sharesToken.deployed();
 
-  console.log("Shares deployed to:", sharesToken.address);
+	console.log('Shares deployed to:', sharesToken.address);
 }
 
 main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+	.then(() => process.exit(0))
+	.catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
