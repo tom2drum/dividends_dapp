@@ -24,7 +24,7 @@ contract Shares is Ownable {
 
     event StakeholderRegistered(address _address, uint256 _share);
     event StakeholdersShareChanged(address _address, uint256 _share);
-    event DividendsRegistered(uint256 amount);
+    event DividendsReceived(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
 
     constructor(uint _totalShares) {
@@ -36,7 +36,7 @@ contract Shares is Ownable {
         require(_stakeholdersNum > 1, "There is not enough stakeholders yet");
 
         _dividendsTotal += msg.value;
-        emit DividendsRegistered(msg.value);
+        emit DividendsReceived(msg.value);
     }
     
     function getStakeholderShares() public view returns(uint256) {
