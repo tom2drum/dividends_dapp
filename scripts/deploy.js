@@ -2,7 +2,7 @@ const hre = require('hardhat');
 
 async function main() {
 	const Shares = await hre.ethers.getContractFactory('Shares');
-	const sharesToken = await Shares.deploy();
+	const sharesToken = await Shares.deploy(10000);
 
 	await sharesToken.deployed();
 
