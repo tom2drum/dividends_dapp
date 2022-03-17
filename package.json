@@ -5,6 +5,7 @@
 	"dependencies": {
 		"@nomiclabs/hardhat-ethers": "^2.0.5",
 		"@nomiclabs/hardhat-waffle": "^2.0.3",
+		"@openzeppelin/contracts": "^4.5.0",
 		"@testing-library/jest-dom": "^5.16.2",
 		"@testing-library/react": "^12.1.4",
 		"@testing-library/user-event": "^13.5.0",
@@ -23,7 +24,7 @@
 	"scripts": {
 		"start": "react-scripts start",
 		"build": "react-scripts build",
-		"test": "react-scripts test",
+		"test:ui": "react-scripts test",
 		"test:contracts": "./node_modules/.bin/hardhat test",
 		"eject": "react-scripts eject"
 	},

@@ -1,31 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "hardhat/console.sol";
 
-contract Shares {
+contract Shares is Ownable {
     struct Stakeholder {
         address id;
-        uint256 share;
+        uint256 shares;
         uint256 claimedAmount;
     }
 
     mapping(address => Stakeholder) public stakeholders;
 
-    uint256 public totalShares;
+    uint public stakeholdersNum;
 
     uint256 public dividendsPool;
 
     uint256 public dividendsTotal;
 
-    uint public stakeholdersNum;
+    uint public soldShares;
+
+    uint public totalShares;
 
     event StakeholderRegistered(address _address, uint256 _share);
     event StakeholdersShareChanged(address _address, uint256 _share);
     event DividendsRegistered(uint256 amount);
     event DividendsReleased(address recipient, uint256 amount);
 
-    constructor() {}
+    constructor(uint _totalShares) {
+        require(_totalShares > 1, "Total number of shares should be greater than 1");
+        totalShares = _totalShares;
+    }
 
     receive() external payable virtual {
         require(stakeholdersNum > 1, "There is not enough stakeholders yet");
@@ -34,13 +41,18 @@ contract Shares {
         emit DividendsRegistered(msg.value);
     }
     
-    function getShare(address _holder) public view returns(uint256) {
+    function getStakeholderShares(address _holder) public view returns(uint256) {
+        // todo show shares amount only to stakehlolder
         require(stakeholders[_holder].id == _holder, "There is no such stakeholder");
 
-        return stakeholders[_holder].share;
+        return stakeholders[_holder].shares;
     }
 
-    function getTotalShares() public view returns(uint256) {
+    function getSoldShares() public view returns(uint) {
+        return soldShares;
+    }
+
+    function getTotalShares() public view returns(uint) {
         return totalShares;
     }
 
@@ -48,31 +60,36 @@ contract Shares {
         return address(this).balance;
     }
 
-    function addStakeholder(address _address, uint256 _share) public {
-        require(_share != 0, "Share cannot be zero");
+    function registerStakeholder(address _address, uint256 _shares) public {
+        require(_shares != 0, "Share cannot be zero");
 
         dividendsPool = getDividendsPool();
 
         require(dividendsPool == 0, "Contract has undistributed dividends");
 
-        if(stakeholders[_address].id == _address) {
-            stakeholders[_address].share += _share;
+        uint availableShares = totalShares - soldShares;
 
-            emit StakeholdersShareChanged(_address, stakeholders[_address].share);
+        require(availableShares >= _shares, "Unsufficient share amount");
+
+        if(stakeholders[_address].id == _address) {
+            stakeholders[_address].shares += _shares;
+
+            emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
         } else {
             Stakeholder memory stakeholder = Stakeholder({
                 id: _address,
-                share: _share,
+                shares: _shares,
                 claimedAmount: 0
             });
 
             stakeholders[_address] = stakeholder;
 
-            emit StakeholderRegistered(_address, _share);
+            stakeholdersNum++;
+
+            emit StakeholderRegistered(_address, _shares);
         }
 
-        totalShares += _share;
-        stakeholdersNum++;
+        soldShares += _shares;
     }
 
     function claimDividends(address payable recipient) public {
@@ -97,6 +114,6 @@ contract Shares {
     }
 
     function _getAmountToPay(Stakeholder memory stakeholder) private view returns(uint256) {
-        return stakeholder.share * dividendsTotal / totalShares - stakeholder.claimedAmount;
+        return stakeholder.shares * dividendsTotal / soldShares - stakeholder.claimedAmount;
     }
 }
