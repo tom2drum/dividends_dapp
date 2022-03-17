@@ -14,11 +14,9 @@ contract Shares is Ownable {
 
     mapping(address => Stakeholder) public stakeholders;
 
-    uint public stakeholdersNum;
+    uint private _stakeholdersNum;
 
-    uint256 public dividendsPool;
-
-    uint256 public dividendsTotal;
+    uint256 private _dividendsTotal;
 
     uint public soldShares;
 
@@ -34,18 +32,17 @@ contract Shares is Ownable {
         totalShares = _totalShares;
     }
 
-    receive() external payable virtual {
-        require(stakeholdersNum > 1, "There is not enough stakeholders yet");
+    receive() external payable virtual onlyOwner {
+        require(_stakeholdersNum > 1, "There is not enough stakeholders yet");
 
-        dividendsTotal += msg.value;
+        _dividendsTotal += msg.value;
         emit DividendsRegistered(msg.value);
     }
     
-    function getStakeholderShares(address _holder) public view returns(uint256) {
-        // todo show shares amount only to stakehlolder
-        require(stakeholders[_holder].id == _holder, "There is no such stakeholder");
+    function getStakeholderShares() public view returns(uint256) {
+        require(stakeholders[_msgSender()].id == _msgSender(), "There is no such stakeholder");
 
-        return stakeholders[_holder].shares;
+        return stakeholders[_msgSender()].shares;
     }
 
     function getSoldShares() public view returns(uint) {
@@ -60,14 +57,14 @@ contract Shares is Ownable {
         return address(this).balance;
     }
 
-    function registerStakeholder(address _address, uint256 _shares) public {
-        require(_shares != 0, "Share cannot be zero");
+    function registerStakeholder(address _address, uint256 _shares) public onlyOwner {
+        require(_shares != 0, "Shares cannot be zero");
 
-        dividendsPool = getDividendsPool();
+        uint256 dividendsPool = getDividendsPool();
 
         require(dividendsPool == 0, "Contract has undistributed dividends");
 
-        uint availableShares = totalShares - soldShares;
+        uint availableShares = totalShares - getSoldShares();
 
         require(availableShares >= _shares, "Unsufficient share amount");
 
@@ -84,7 +81,7 @@ contract Shares is Ownable {
 
             stakeholders[_address] = stakeholder;
 
-            stakeholdersNum++;
+            _stakeholdersNum++;
 
             emit StakeholderRegistered(_address, _shares);
         }
@@ -93,7 +90,7 @@ contract Shares is Ownable {
     }
 
     function claimDividends(address payable recipient) public {
-        dividendsPool = getDividendsPool();
+        uint256 dividendsPool = getDividendsPool();
         require(dividendsPool > 0, "Dividends pool is empty");
 
         Stakeholder memory stakeholder = stakeholders[recipient];
@@ -114,6 +111,6 @@ contract Shares is Ownable {
     }
 
     function _getAmountToPay(Stakeholder memory stakeholder) private view returns(uint256) {
-        return stakeholder.shares * dividendsTotal / soldShares - stakeholder.claimedAmount;
+        return stakeholder.shares * _dividendsTotal / getSoldShares() - stakeholder.claimedAmount;
     }
 }
