@@ -89,28 +89,28 @@ contract Shares is Ownable {
         soldShares += _shares;
     }
 
-    function claimDividends(address payable recipient) public {
+    function claimDividends() public {
         uint256 dividendsPool = getDividendsPool();
         require(dividendsPool > 0, "Dividends pool is empty");
 
-        Stakeholder memory stakeholder = stakeholders[recipient];
+        Stakeholder memory stakeholder = stakeholders[_msgSender()];
 
-        require(stakeholder.id == recipient, "There is no such stakeholder");
+        require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
         uint256 amountToPay = _getAmountToPay(stakeholder);
 
         require(amountToPay > 0, "No dividends to pay");
         require(amountToPay <= dividendsPool, "Not enought money in the pool");
 
-        stakeholders[recipient].claimedAmount += amountToPay;
+        stakeholders[_msgSender()].claimedAmount += amountToPay;
         (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
         require(sent, "Failed to send dividends");
 
-        emit DividendsReleased(recipient, amountToPay);
+        emit DividendsReleased(_msgSender(), amountToPay);
     }
 
     function _getAmountToPay(Stakeholder memory stakeholder) private view returns(uint256) {
-        return stakeholder.shares * _dividendsTotal / getSoldShares() - stakeholder.claimedAmount;
+        return stakeholder.shares * _dividendsTotal / totalShares - stakeholder.claimedAmount;
     }
 }
