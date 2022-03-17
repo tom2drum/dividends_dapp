@@ -32,7 +32,7 @@ describe('Shares', function () {
 				value: DIVIDENDS_AMOUNT,
 			});
 
-			await expect(tr).to.emit(contractToken, 'DividendsRegistered').withArgs(DIVIDENDS_AMOUNT);
+			await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(DIVIDENDS_AMOUNT);
 
 			let dividends = await contractToken.getDividendsPool();
 			expect(dividends).to.equal(DIVIDENDS_AMOUNT);
@@ -41,7 +41,7 @@ describe('Shares', function () {
 				to: contractToken.address,
 				value: DIVIDENDS_AMOUNT,
 			});
-			await expect(tr).to.emit(contractToken, 'DividendsRegistered').withArgs(DIVIDENDS_AMOUNT);
+			await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(DIVIDENDS_AMOUNT);
 
 			dividends = await contractToken.getDividendsPool();
 			expect(dividends).to.equal(DIVIDENDS_AMOUNT * 2);
