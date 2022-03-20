@@ -10,6 +10,8 @@
 		"@types/jest": "^27.4.1",
 		"@types/react": "^17.0.41",
 		"@types/react-dom": "^17.0.14",
+		"eslint-config-react-app": "^7.0.0",
+		"eslint-import-resolver-typescript": "^2.5.0",
 		"husky": "^7.0.4",
 		"lint-staged": "^12.3.6",
 		"react": "^17.0.2",
@@ -23,12 +25,6 @@
 		"test:ui": "react-scripts test",
 		"test:contracts": "./node_modules/.bin/hardhat test",
 		"eject": "react-scripts eject"
-	},
-	"eslintConfig": {
-		"extends": [
-			"react-app",
-			"react-app/jest"
-		]
 	},
 	"browserslist": {
 		"production": [

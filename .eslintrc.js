@@ -1,12 +1,13 @@
 module.exports = {
     env: {
-        browser: false,
+        browser: true,
         es2021: true,
         mocha: true,
         node: true,
     },
     extends: [
         'react-app', 
+        'react-app/jest',
         'eslint:recommended',
         'plugin:node/recommended'
     ],
