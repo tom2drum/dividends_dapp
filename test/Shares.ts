@@ -1,10 +1,11 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { Shares } from '../typechain/Shares';
 
 const SHARES = { first: 80, second: 20 };
 const DIVIDENDS_AMOUNT = 10000;
 
-let contractToken;
+let contractToken: Shares;
 
 beforeEach(async () => {
     const Shares = await ethers.getContractFactory('Shares');

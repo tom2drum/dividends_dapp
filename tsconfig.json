@@ -18,6 +18,6 @@
 		"noEmit": true,
 		"jsx": "react-jsx"
 	},
-	"include": ["./scripts", "./test", "./typechain", "src"],
+	"include": ["./scripts", "./test", "./typechain", "./src"],
 	"files": ["./hardhat.config.ts"]
 }
