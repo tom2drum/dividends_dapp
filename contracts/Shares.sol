@@ -6,36 +6,46 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract Shares is Ownable {
+
+	uint public constant STAKEHOLDERS_LIMIT = 20;
+
 	struct Stakeholder {
 		address id;
-		uint256 shares;
+		uint16 shares;
 		uint256 claimedAmount;
 	}
 
-	mapping(address => Stakeholder) public stakeholders;
+	mapping(address => Stakeholder) private stakeholders;
 
-	uint256 private _stakeholdersNum;
+	uint8 private stakeholdersNum;
 
-	uint256 private _dividendsTotal;
+	uint256 private dividendsTotal;
 
-	uint256 public soldShares;
+	uint16 private soldShares;
 
-	uint256 public totalShares;
+	uint16 private totalShares;
+
+	uint8 private stakeholdersLimit;
+
+	address[] private registeredStakeholders;
 
 	event StakeholderRegistered(address _address, uint256 _share);
 	event StakeholdersShareChanged(address _address, uint256 _share);
 	event DividendsReceived(uint256 amount);
 	event DividendsReleased(address recipient, uint256 amount);
 
-	constructor(uint256 _totalShares) {
+	constructor(uint16 _totalShares, uint8 _stakeholdersLimit) {
 		require(_totalShares > 1, "Total number of shares should be greater than 1");
+		require(_stakeholdersLimit <= STAKEHOLDERS_LIMIT, "Maximum allowed stakeholders exceeded");
+
 		totalShares = _totalShares;
+		stakeholdersLimit = _stakeholdersLimit;
 	}
 
 	receive() external payable virtual onlyOwner {
-		require(_stakeholdersNum > 1, "There is not enough stakeholders yet");
+		require(stakeholdersNum > 1, "There is not enough stakeholders yet");
 
-		_dividendsTotal += msg.value;
+		dividendsTotal += msg.value;
 		emit DividendsReceived(msg.value);
 	}
 
@@ -57,32 +67,19 @@ contract Shares is Ownable {
 		return address(this).balance;
 	}
 
-	function registerStakeholder(address _address, uint256 _shares) public onlyOwner {
-		require(_shares != 0, "Shares cannot be zero");
+	function registerShares(address _address, uint16 _shares) public onlyOwner {
 
 		uint256 dividendsPool = getDividendsPool();
-
 		require(dividendsPool == 0, "Contract has undistributed dividends");
 
 		uint256 availableShares = totalShares - getSoldShares();
-
 		require(availableShares >= _shares, "Unsufficient share amount");
 
 		if (stakeholders[_address].id == _address) {
-			stakeholders[_address].shares += _shares;
-
-			emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
+			changeStakeholderShares(_address, _shares);
 		} else {
-			Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, claimedAmount: 0 });
-
-			stakeholders[_address] = stakeholder;
-
-			_stakeholdersNum++;
-
-			emit StakeholderRegistered(_address, _shares);
+			addStakeholder(_address, _shares);
 		}
-
-		soldShares += _shares;
 	}
 
 	function claimDividends() public {
@@ -93,7 +90,7 @@ contract Shares is Ownable {
 
 		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
-		uint256 amountToPay = _getAmountToPay(stakeholder);
+		uint256 amountToPay = getAmountToPay(stakeholder);
 
 		require(amountToPay > 0, "No dividends to pay");
 		require(amountToPay <= dividendsPool, "Not enought money in the pool");
@@ -106,7 +103,52 @@ contract Shares is Ownable {
 		emit DividendsReleased(_msgSender(), amountToPay);
 	}
 
-	function _getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
-		return (stakeholder.shares * _dividendsTotal) / totalShares - stakeholder.claimedAmount;
+	function addStakeholder(address _address, uint16 _shares) private {
+		require(_shares > 0, "Shares cannot be zero");
+		Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, claimedAmount: 0 });
+
+		stakeholders[_address] = stakeholder;
+
+		stakeholdersNum++;
+
+		soldShares += _shares;
+
+		registeredStakeholders.push(_address);
+
+		emit StakeholderRegistered(_address, _shares);
+	}
+
+	function changeStakeholderShares(address _address, uint16 _shares) private {
+
+		soldShares = soldShares - stakeholders[_address].shares + _shares;
+
+		if (_shares == 0) {
+			removeStakeHolderFromList(_address);
+			delete stakeholders[_address];
+		} else {
+			stakeholders[_address].shares = _shares;
+		}
+
+		emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
+	}
+
+	function removeStakeHolderFromList(address _address) private {
+		uint indexToRemove = registeredStakeholders.length;
+
+		for (uint index = 0; index < registeredStakeholders.length; index++) {
+			if (registeredStakeholders[index] == _address) {
+				indexToRemove = index;
+				break;
+			}
+		}
+
+		if (indexToRemove < registeredStakeholders.length) {
+			registeredStakeholders[indexToRemove] = registeredStakeholders[registeredStakeholders.length - 1];
+			registeredStakeholders.pop();
+		}
+	}
+
+	function getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
+		return (stakeholder.shares * dividendsTotal) / totalShares - stakeholder.claimedAmount;
 	}
 }
