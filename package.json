@@ -24,7 +24,8 @@
 		"build": "react-scripts build",
 		"test:ui": "react-scripts test",
 		"test:contracts": "./node_modules/.bin/hardhat test",
-		"eject": "react-scripts eject"
+		"eject": "react-scripts eject",
+		"compile": "./node_modules/.bin/hardhat compile"
 	},
 	"browserslist": {
 		"production": [

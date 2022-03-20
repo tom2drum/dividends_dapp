@@ -30,5 +30,7 @@ jobs:
                   cache: 'npm'
             - name: Install dependencies
               run: npm ci
+            - name: Compile contracts
+              run: npm run compile
             - name: Run test script
               run: npm run test:contracts
