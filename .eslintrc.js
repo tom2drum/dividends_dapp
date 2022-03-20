@@ -5,8 +5,9 @@ module.exports = {
         mocha: true,
         node: true,
     },
+    plugins: [ '@typescript-eslint' ],
     extends: [
-        'react-app', 
+        // 'react-app', 
         'react-app/jest',
         'eslint:recommended',
         'plugin:node/recommended'
