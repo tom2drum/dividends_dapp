@@ -1,9 +1,0 @@
-node_modules
-artifacts
-cache
-coverage*
-gasReporterOutput.json
-
-/src/artifacts
-/public
-/build

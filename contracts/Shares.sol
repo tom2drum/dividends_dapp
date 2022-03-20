@@ -6,111 +6,107 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 contract Shares is Ownable {
-    struct Stakeholder {
-        address id;
-        uint256 shares;
-        uint256 claimedAmount;
-    }
+	struct Stakeholder {
+		address id;
+		uint256 shares;
+		uint256 claimedAmount;
+	}
 
-    mapping(address => Stakeholder) public stakeholders;
+	mapping(address => Stakeholder) public stakeholders;
 
-    uint private _stakeholdersNum;
+	uint256 private _stakeholdersNum;
 
-    uint256 private _dividendsTotal;
+	uint256 private _dividendsTotal;
 
-    uint public soldShares;
+	uint256 public soldShares;
 
-    uint public totalShares;
+	uint256 public totalShares;
 
-    event StakeholderRegistered(address _address, uint256 _share);
-    event StakeholdersShareChanged(address _address, uint256 _share);
-    event DividendsReceived(uint256 amount);
-    event DividendsReleased(address recipient, uint256 amount);
+	event StakeholderRegistered(address _address, uint256 _share);
+	event StakeholdersShareChanged(address _address, uint256 _share);
+	event DividendsReceived(uint256 amount);
+	event DividendsReleased(address recipient, uint256 amount);
 
-    constructor(uint _totalShares) {
-        require(_totalShares > 1, "Total number of shares should be greater than 1");
-        totalShares = _totalShares;
-    }
+	constructor(uint256 _totalShares) {
+		require(_totalShares > 1, "Total number of shares should be greater than 1");
+		totalShares = _totalShares;
+	}
 
-    receive() external payable virtual onlyOwner {
-        require(_stakeholdersNum > 1, "There is not enough stakeholders yet");
+	receive() external payable virtual onlyOwner {
+		require(_stakeholdersNum > 1, "There is not enough stakeholders yet");
 
-        _dividendsTotal += msg.value;
-        emit DividendsReceived(msg.value);
-    }
-    
-    function getStakeholderShares() public view returns(uint256) {
-        require(stakeholders[_msgSender()].id == _msgSender(), "There is no such stakeholder");
+		_dividendsTotal += msg.value;
+		emit DividendsReceived(msg.value);
+	}
 
-        return stakeholders[_msgSender()].shares;
-    }
+	function getStakeholderShares() public view returns (uint256) {
+		require(stakeholders[_msgSender()].id == _msgSender(), "There is no such stakeholder");
 
-    function getSoldShares() public view returns(uint) {
-        return soldShares;
-    }
+		return stakeholders[_msgSender()].shares;
+	}
 
-    function getTotalShares() public view returns(uint) {
-        return totalShares;
-    }
+	function getSoldShares() public view returns (uint256) {
+		return soldShares;
+	}
 
-    function getDividendsPool() public view returns(uint256) {
-        return address(this).balance;
-    }
+	function getTotalShares() public view returns (uint256) {
+		return totalShares;
+	}
 
-    function registerStakeholder(address _address, uint256 _shares) public onlyOwner {
-        require(_shares != 0, "Shares cannot be zero");
+	function getDividendsPool() public view returns (uint256) {
+		return address(this).balance;
+	}
 
-        uint256 dividendsPool = getDividendsPool();
+	function registerStakeholder(address _address, uint256 _shares) public onlyOwner {
+		require(_shares != 0, "Shares cannot be zero");
 
-        require(dividendsPool == 0, "Contract has undistributed dividends");
+		uint256 dividendsPool = getDividendsPool();
 
-        uint availableShares = totalShares - getSoldShares();
+		require(dividendsPool == 0, "Contract has undistributed dividends");
 
-        require(availableShares >= _shares, "Unsufficient share amount");
+		uint256 availableShares = totalShares - getSoldShares();
 
-        if(stakeholders[_address].id == _address) {
-            stakeholders[_address].shares += _shares;
+		require(availableShares >= _shares, "Unsufficient share amount");
 
-            emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
-        } else {
-            Stakeholder memory stakeholder = Stakeholder({
-                id: _address,
-                shares: _shares,
-                claimedAmount: 0
-            });
+		if (stakeholders[_address].id == _address) {
+			stakeholders[_address].shares += _shares;
 
-            stakeholders[_address] = stakeholder;
+			emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
+		} else {
+			Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, claimedAmount: 0 });
 
-            _stakeholdersNum++;
+			stakeholders[_address] = stakeholder;
 
-            emit StakeholderRegistered(_address, _shares);
-        }
+			_stakeholdersNum++;
 
-        soldShares += _shares;
-    }
+			emit StakeholderRegistered(_address, _shares);
+		}
 
-    function claimDividends() public {
-        uint256 dividendsPool = getDividendsPool();
-        require(dividendsPool > 0, "Dividends pool is empty");
+		soldShares += _shares;
+	}
 
-        Stakeholder memory stakeholder = stakeholders[_msgSender()];
+	function claimDividends() public {
+		uint256 dividendsPool = getDividendsPool();
+		require(dividendsPool > 0, "Dividends pool is empty");
 
-        require(stakeholder.id == _msgSender(), "There is no such stakeholder");
+		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 
-        uint256 amountToPay = _getAmountToPay(stakeholder);
+		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
-        require(amountToPay > 0, "No dividends to pay");
-        require(amountToPay <= dividendsPool, "Not enought money in the pool");
+		uint256 amountToPay = _getAmountToPay(stakeholder);
 
-        stakeholders[_msgSender()].claimedAmount += amountToPay;
-        (bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
+		require(amountToPay > 0, "No dividends to pay");
+		require(amountToPay <= dividendsPool, "Not enought money in the pool");
 
-        require(sent, "Failed to send dividends");
+		stakeholders[_msgSender()].claimedAmount += amountToPay;
+		(bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
-        emit DividendsReleased(_msgSender(), amountToPay);
-    }
+		require(sent, "Failed to send dividends");
 
-    function _getAmountToPay(Stakeholder memory stakeholder) private view returns(uint256) {
-        return stakeholder.shares * _dividendsTotal / totalShares - stakeholder.claimedAmount;
-    }
+		emit DividendsReleased(_msgSender(), amountToPay);
+	}
+
+	function _getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
+		return (stakeholder.shares * _dividendsTotal) / totalShares - stakeholder.claimedAmount;
+	}
 }
