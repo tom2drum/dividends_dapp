@@ -40,7 +40,7 @@ describe('Shares', function () {
 
             await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(DIVIDENDS_AMOUNT);
 
-            let dividends = await contractToken.getDividendsPool();
+            let dividends = await contractToken.getTotalBalance();
             expect(dividends).to.equal(DIVIDENDS_AMOUNT);
 
             tr = owner.sendTransaction({
@@ -49,7 +49,7 @@ describe('Shares', function () {
             });
             await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(DIVIDENDS_AMOUNT);
 
-            dividends = await contractToken.getDividendsPool();
+            dividends = await contractToken.getTotalBalance();
             expect(dividends).to.equal(DIVIDENDS_AMOUNT * 2);
         });
 
@@ -83,20 +83,11 @@ describe('Shares', function () {
                 expect(tx).to.changeEtherBalance(secondAccount, DIVIDENDS_AMOUNT * 0.2);
             });
 
-            it('stakeholder cannot claim dividends twice', async () => {
+            it('will not release dividends if stakeholder has already claimed all available amount', async () => {
                 const { secondAccount } = await registerAccountsAndAddDividends();
                 await contractToken.connect(secondAccount).claimDividends();
 
                 await expect(contractToken.connect(secondAccount).claimDividends()).to.be.revertedWith('No dividends to pay');
-            });
-
-            it('will not release dividends from empty pool', async () => {
-                const { firstAccount, secondAccount } = await getAccounts();
-
-                await contractToken.registerShares(firstAccount.address, SHARES.first);
-                await contractToken.registerShares(secondAccount.address, SHARES.second);
-
-                await expect(contractToken.connect(secondAccount).claimDividends()).to.be.revertedWith('Dividends pool is empty');
             });
 
             it('will not pay dividends to unknown stakeholder', async () => {
@@ -155,7 +146,7 @@ describe('Shares', function () {
                 await contractToken.connect(secondAccount).claimDividends();
                 await contractToken.connect(firstAccount).claimDividends();
 
-                const dividendsPool = await contractToken.getDividendsPool();
+                const dividendsPool = await contractToken.getTotalBalance();
                 expect(dividendsPool).to.equal(0);
             });
         });
@@ -198,14 +189,6 @@ describe('Shares', function () {
             const { firstAccount } = await getAccounts();
 
             await expect(contractToken.registerShares(firstAccount.address, 0)).to.be.revertedWith('Shares cannot be zero');
-        });
-
-        it('should not register a stakeholder if not all dividends were distributed', async () => {
-            const { secondAccount } = await registerAccountsAndAddDividends();
-
-            await expect(contractToken.registerShares(secondAccount.address, 30)).to.be.revertedWith('Contract has undistributed dividends');
-
-            expect(await contractToken.connect(secondAccount).getStakeholderShares()).to.equal(SHARES.second);
         });
 
         it('will not show shares info to unauthorized account', async () => {

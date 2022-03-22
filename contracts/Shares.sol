@@ -12,21 +12,21 @@ contract Shares is Ownable {
 	struct Stakeholder {
 		address id;
 		uint16 shares;
-		uint256 claimedAmount;
+		uint csaClaimed; // claimed amount in current shares allocation
+		uint unclaimedTotal; // total unclaimed amount
 	}
 
 	mapping(address => Stakeholder) private stakeholders;
 
-	uint8 private stakeholdersNum;
-
-	uint256 private dividendsTotal;
+	uint private csaTotal; //total received amount in current shares allocation
+	uint private payedTotal;
+	uint private unclaimedTotal;
+	uint private undistributedTotal;
 
 	uint16 private soldShares;
-
 	uint16 private totalShares;
 
 	uint8 private stakeholdersLimit;
-
 	address[] private registeredStakeholders;
 
 	event StakeholderRegistered(address _address, uint256 _share);
@@ -43,9 +43,10 @@ contract Shares is Ownable {
 	}
 
 	receive() external payable virtual onlyOwner {
-		require(stakeholdersNum > 1, "There is not enough stakeholders yet");
+		require(registeredStakeholders.length > 1, "There is not enough stakeholders yet");
 
-		dividendsTotal += msg.value;
+		csaTotal += msg.value;
+
 		emit DividendsReceived(msg.value);
 	}
 
@@ -63,17 +64,24 @@ contract Shares is Ownable {
 		return totalShares;
 	}
 
-	function getDividendsPool() public view returns (uint256) {
+	function getTotalBalance() public view returns (uint256) {
 		return address(this).balance;
 	}
 
+	function getCurrentPool() public view returns (uint256) {
+		return getTotalBalance() - unclaimedTotal - undistributedTotal;
+	}
+
 	function registerShares(address _address, uint16 _shares) public onlyOwner {
-
-		uint256 dividendsPool = getDividendsPool();
-		require(dividendsPool == 0, "Contract has undistributed dividends");
-
 		uint256 availableShares = totalShares - getSoldShares();
 		require(availableShares >= _shares, "Unsufficient share amount");
+		require(stakeholders[_address].id == _address || _shares > 0, "Shares cannot be zero");
+
+		uint256 pool = getCurrentPool();
+		if (pool > 0) {
+			distributeUnclaimedDividends();
+			csaTotal = 0;
+		}
 
 		if (stakeholders[_address].id == _address) {
 			changeStakeholderShares(_address, _shares);
@@ -83,19 +91,18 @@ contract Shares is Ownable {
 	}
 
 	function claimDividends() public {
-		uint256 dividendsPool = getDividendsPool();
-		require(dividendsPool > 0, "Dividends pool is empty");
-
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
-
 		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
 		uint256 amountToPay = getAmountToPay(stakeholder);
 
 		require(amountToPay > 0, "No dividends to pay");
-		require(amountToPay <= dividendsPool, "Not enought money in the pool");
+		require(amountToPay <= getTotalBalance(), "Not enought money in the pool");
 
-		stakeholders[_msgSender()].claimedAmount += amountToPay;
+		payedTotal += amountToPay;
+		unclaimedTotal -= stakeholder.unclaimedTotal;
+		stakeholders[_msgSender()].csaClaimed += amountToPay - stakeholder.unclaimedTotal;
+		stakeholders[_msgSender()].unclaimedTotal = 0;
 		(bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
 
 		require(sent, "Failed to send dividends");
@@ -104,12 +111,9 @@ contract Shares is Ownable {
 	}
 
 	function addStakeholder(address _address, uint16 _shares) private {
-		require(_shares > 0, "Shares cannot be zero");
-		Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, claimedAmount: 0 });
+		Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, csaClaimed: 0, unclaimedTotal: 0 });
 
 		stakeholders[_address] = stakeholder;
-
-		stakeholdersNum++;
 
 		soldShares += _shares;
 
@@ -148,7 +152,21 @@ contract Shares is Ownable {
 		}
 	}
 
+	function distributeUnclaimedDividends() private {
+		for (uint index = 0; index < registeredStakeholders.length; index++) {
+			uint unclaimedAmount = getCsaUnclaimedAmount(stakeholders[registeredStakeholders[index]]);
+			stakeholders[registeredStakeholders[index]].unclaimedTotal += unclaimedAmount;
+			unclaimedTotal += unclaimedAmount;
+		}
+
+		undistributedTotal += csaTotal * (totalShares - soldShares) / totalShares;
+	}
+
 	function getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
-		return (stakeholder.shares * dividendsTotal) / totalShares - stakeholder.claimedAmount;
+		return getCsaUnclaimedAmount(stakeholder) + stakeholder.unclaimedTotal;
+	}
+
+	function getCsaUnclaimedAmount(Stakeholder memory stakeholder) private view returns (uint256) {
+		return (stakeholder.shares * csaTotal) / totalShares - stakeholder.csaClaimed;
 	}
 }
