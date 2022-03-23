@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract Shares is Ownable {
 
@@ -70,6 +70,10 @@ contract Shares is Ownable {
 
 	function getCurrentPool() public view returns (uint256) {
 		return getTotalBalance() - unclaimedTotal - undistributedTotal;
+	}
+
+	function getUndistributedDividends() public view returns (uint256) {
+		return undistributedTotal;
 	}
 
 	function registerShares(address _address, uint16 _shares) public onlyOwner {
@@ -156,6 +160,7 @@ contract Shares is Ownable {
 		for (uint index = 0; index < registeredStakeholders.length; index++) {
 			uint unclaimedAmount = getCsaUnclaimedAmount(stakeholders[registeredStakeholders[index]]);
 			stakeholders[registeredStakeholders[index]].unclaimedTotal += unclaimedAmount;
+			stakeholders[registeredStakeholders[index]].csaClaimed = 0;
 			unclaimedTotal += unclaimedAmount;
 		}
 
@@ -167,6 +172,9 @@ contract Shares is Ownable {
 	}
 
 	function getCsaUnclaimedAmount(Stakeholder memory stakeholder) private view returns (uint256) {
+		if (csaTotal == 0) {
+			return 0;
+		}
 		return (stakeholder.shares * csaTotal) / totalShares - stakeholder.csaClaimed;
 	}
 }
