@@ -1,5 +1,5 @@
 {
-	"name": "my-app",
+	"name": "dividends-dapp",
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
@@ -12,6 +12,7 @@
 		"@types/react-dom": "^17.0.14",
 		"eslint-config-react-app": "^7.0.0",
 		"eslint-import-resolver-typescript": "^2.5.0",
+		"hardhat-watcher": "^2.1.1",
 		"husky": "^7.0.4",
 		"lint-staged": "^12.3.6",
 		"react": "^17.0.2",
@@ -24,6 +25,7 @@
 		"build": "react-scripts build",
 		"test:ui": "react-scripts test",
 		"test:contracts": "./node_modules/.bin/hardhat test",
+		"test:contracts:watch": "./node_modules/.bin/hardhat watch test",
 		"eject": "react-scripts eject",
 		"compile": "./node_modules/.bin/hardhat compile"
 	},

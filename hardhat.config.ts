@@ -6,6 +6,7 @@ import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
+import 'hardhat-watcher';
 
 dotenv.config();
 
@@ -43,6 +44,13 @@ const config: HardhatUserConfig = {
     paths: {
         artifacts: './src/artifacts',
     },
+    watcher: {
+        test: {
+            tasks: [ { command: 'test', params: { testFiles: [ '{path}' ] } } ],
+            files: [ './test/**/*' ],
+            verbose: true
+        }
+    }
 };
 
 export default config;
