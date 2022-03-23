@@ -1,4 +1,4 @@
-name: Code coverage workflow
+name: Code coverage
 
 on:
     push:
@@ -7,8 +7,8 @@ on:
         branches: [master]
 
 jobs:
-    code-coverage:
-        name: Code coverage
+    run:
+        name: Run
 
         runs-on: ubuntu-latest
 
@@ -33,3 +33,5 @@ jobs:
               run: npm run code-coverage
             - name: Generate code coverage report
               uses: romeovs/lcov-reporter-action@v0.2.11
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
