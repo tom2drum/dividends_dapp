@@ -27,7 +27,8 @@
 		"test:contracts": "./node_modules/.bin/hardhat test",
 		"test:contracts:watch": "./node_modules/.bin/hardhat watch test",
 		"eject": "react-scripts eject",
-		"compile": "./node_modules/.bin/hardhat compile"
+		"compile": "./node_modules/.bin/hardhat compile",
+		"code-coverage": "./node_modules/.bin/hardhat coverage"
 	},
 	"browserslist": {
 		"production": [
