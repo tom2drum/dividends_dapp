@@ -77,6 +77,8 @@ contract Shares is Ownable {
 	}
 
 	function registerShares(address _address, uint16 _shares) public onlyOwner {
+		require(owner() != _address, "Cannot register shares for the contract owner");
+
 		uint256 availableShares = totalShares - getSoldShares();
 		require(availableShares >= _shares, "Unsufficient share amount");
 		require(stakeholders[_address].id == _address || _shares > 0, "Shares cannot be zero");
