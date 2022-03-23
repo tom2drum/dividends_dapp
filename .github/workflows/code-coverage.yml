@@ -1,4 +1,4 @@
-name: Code coverage
+name: Code coverage workflow
 
 on:
     push:
@@ -7,7 +7,7 @@ on:
         branches: [master]
 
 jobs:
-    job:
+    code-coverage:
         name: Code coverage
 
         runs-on: ubuntu-latest
@@ -27,7 +27,9 @@ jobs:
                   cache: 'npm'
             - name: Install dependencies
               run: npm ci
-            - name: Run test script
+            - name: Compile contracts
+              run: npm run compile
+            - name: Run coverage script
               run: npm run code-coverage
-            - name: Code Coverage Report
+            - name: Generate code coverage report
               uses: romeovs/lcov-reporter-action@v0.2.11
