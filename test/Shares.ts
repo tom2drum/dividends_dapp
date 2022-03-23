@@ -155,11 +155,6 @@ describe('Shares', function () {
                     const balance = await contractToken.getTotalBalance();
                     expect(balance).to.equal(7_500);
                 });
-
-                it('undistributed dividends amount is correct', async() => {
-                    const undistributedTotal = await contractToken.getUndistributedDividends();
-                    expect(undistributedTotal).to.equal(7_500);
-                });
             });
 
             describe('and new dividends is added after that', () => {
@@ -186,14 +181,6 @@ describe('Shares', function () {
 
                     const balance = await contractToken.getTotalBalance();
                     expect(balance).to.equal(12_000);
-                });
-
-                it('undistributed dividends amount is correct', async () => {
-                    const { thirdAccount } = await getAccounts();
-                    await contractToken.registerShares(thirdAccount.address, 20);
-
-                    const undistributedTotal = await contractToken.getUndistributedDividends();
-                    expect(undistributedTotal).to.equal(12_000);
                 });
             });
         });
@@ -232,15 +219,29 @@ describe('Shares', function () {
                 const balance = await contractToken.getTotalBalance();
                 expect(balance).to.equal(13_500);
             });
+        });
 
-            it('undistributed dividends amount is correct', async () => {
-                const { thirdAccount } = await getAccounts();
-                await contractToken.registerShares(thirdAccount.address, 20);
-
-                const undistributedTotal = await contractToken.getUndistributedDividends();
-                expect(undistributedTotal).to.equal(9_500);
+        describe('undistributed dividends', () => {
+            it('are tracked correctly', async() => {
+                const { firstAccount, secondAccount } = await getAccounts();
+                await contractToken.registerShares(firstAccount.address, 10);
+                await contractToken.registerShares(secondAccount.address, 40);
+    
+                let undistributedTotal = await contractToken.getUndistributedDividends();
+                expect(undistributedTotal).to.equal(0);
+    
+                await depositDividends(10_000);
+                undistributedTotal = await contractToken.getUndistributedDividends();
+                expect(undistributedTotal).to.equal(5_000);
+                
+                
+                await contractToken.registerShares(firstAccount.address, 30);
+                await depositDividends(20_000);
+                undistributedTotal = await contractToken.getUndistributedDividends();
+                expect(undistributedTotal).to.equal(11_000);
             });
         });
+
     });
 
     describe('shares', () => {

@@ -46,6 +46,7 @@ contract Shares is Ownable {
 		require(registeredStakeholders.length > 1, "There is not enough stakeholders yet");
 
 		csaTotal += msg.value;
+		undistributedTotal += msg.value * (totalShares - getSoldShares()) / totalShares;
 
 		emit DividendsReceived(msg.value);
 	}
@@ -165,8 +166,6 @@ contract Shares is Ownable {
 			stakeholders[registeredStakeholders[index]].csaClaimed = 0;
 			unclaimedTotal += unclaimedAmount;
 		}
-
-		undistributedTotal += csaTotal * (totalShares - soldShares) / totalShares;
 	}
 
 	function getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
