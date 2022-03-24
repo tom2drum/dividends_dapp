@@ -1,3 +1,5 @@
+[![Test contracts](https://github.com/1n1t/shares/actions/workflows/contract-tests.yml/badge.svg?branch=master)](https://github.com/1n1t/shares/actions/workflows/contract-tests.yml)
+
 # Advanced Sample Hardhat Project
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
