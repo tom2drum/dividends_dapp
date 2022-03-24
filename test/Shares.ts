@@ -277,6 +277,17 @@ describe('Shares', function () {
             expect(await contractToken.getSoldShares()).to.equal(SHARES.second);
         });
 
+        it('will delete stakeholder from list when changing his shares to 0', async() => {
+            const { firstAccount, secondAccount } = await getAccounts();
+
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+            await contractToken.registerShares(secondAccount.address, SHARES.second);
+            await contractToken.registerShares(firstAccount.address, 0);
+
+            await expect(depositDividends(10_000)).to.be.revertedWith('There is not enough stakeholders yet');
+            await expect(contractToken.connect(firstAccount).getStakeholderShares()).to.be.revertedWith('There is no such stakeholder');
+        });
+
         it('should not register a stakeholder with empty share', async () => {
             const { firstAccount } = await getAccounts();
 
@@ -298,6 +309,18 @@ describe('Shares', function () {
             const { owner } = await getAccounts();
 
             await expect(contractToken.registerShares(owner.address, 1)).to.be.revertedWith('Cannot register shares for the contract owner');
+        });
+
+        it('anyone can see amount of sold and total shares', async() => {
+            const { firstAccount, secondAccount } = await getAccounts();
+
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+
+            const soldShares = await contractToken.connect(secondAccount).getSoldShares();
+            const totalShares = await contractToken.connect(secondAccount).getTotalShares();
+
+            expect(soldShares).to.equal(SHARES.first);
+            expect(totalShares).to.equal(SHARES.first + SHARES.second);
         });
     });
 });
