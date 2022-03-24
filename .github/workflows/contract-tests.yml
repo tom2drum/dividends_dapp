@@ -10,8 +10,8 @@ on:
         branches: [master]
 
 jobs:
-    job:
-        name: Test contracts
+    run:
+        name: Run
 
         runs-on: ubuntu-latest
 
