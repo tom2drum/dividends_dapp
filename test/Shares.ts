@@ -294,7 +294,26 @@ describe('Shares', function () {
             await expect(contractToken.registerShares(firstAccount.address, 0)).to.be.revertedWith('Shares cannot be zero');
         });
 
-        it('will not show shares info to unauthorized account', async () => {
+        it('should not register new stakeholder when limit has reached', async () => {
+            const Shares = await ethers.getContractFactory('Shares');
+            const contractToken = await Shares.deploy(SHARES.first + SHARES.second, 2);
+            await contractToken.deployed();
+            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, 10);
+            await contractToken.registerShares(secondAccount.address, 10);
+
+            await expect(contractToken.registerShares(thirdAccount.address, 10)).to.be.revertedWith('Cannot add more stakeholders than the limit');
+        });
+
+        it('should not register new stakeholder when all available shares are sold', async () => {
+            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+            await contractToken.registerShares(secondAccount.address, SHARES.second);
+
+            await expect(contractToken.registerShares(thirdAccount.address, 10)).to.be.revertedWith('Insufficient share amount');
+        });
+
+        it('should not show shares info to unauthorized account', async () => {
             const { firstAccount } = await getAccounts();
 
             await contractToken.registerShares(firstAccount.address, SHARES.first);

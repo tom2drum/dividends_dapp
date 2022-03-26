@@ -81,7 +81,7 @@ contract Shares is Ownable {
 		require(owner() != _address, "Cannot register shares for the contract owner");
 
 		uint256 availableShares = getTotalShares() - getSoldShares();
-		require(availableShares >= _shares, "Unsufficient share amount");
+		require(availableShares >= _shares, "Insufficient share amount");
 		require(stakeholders[_address].id == _address || _shares > 0, "Shares cannot be zero");
 
 		uint256 pool = getCurrentPool();
@@ -93,6 +93,7 @@ contract Shares is Ownable {
 		if (stakeholders[_address].id == _address) {
 			changeStakeholderShares(_address, _shares);
 		} else {
+			require(registeredStakeholders.length < stakeholdersLimit, "Cannot add more stakeholders than the limit");
 			addStakeholder(_address, _shares);
 		}
 	}
