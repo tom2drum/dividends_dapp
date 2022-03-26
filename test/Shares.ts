@@ -265,16 +265,26 @@ describe('Shares', function () {
             await expect(contractToken.connect(firstAccount).registerShares(firstAccount.address, SHARES.first)).to.be.revertedWith('Ownable: caller is not the owner');
         });
 
-        it('should replace shares for existing stakeholder', async () => {
-            const { firstAccount } = await getAccounts();
+        it('should replace shares for existing stakeholder if there is enough shares left', async () => {
+            const { firstAccount, secondAccount } = await getAccounts();
 
             await contractToken.registerShares(firstAccount.address, SHARES.first);
-            await expect(contractToken.registerShares(firstAccount.address, SHARES.second))
+            await contractToken.registerShares(secondAccount.address, SHARES.second);
+            await expect(contractToken.registerShares(secondAccount.address, SHARES.second - 1))
                 .to.emit(contractToken, 'StakeholdersShareChanged')
-                .withArgs(firstAccount.address, SHARES.second);
+                .withArgs(secondAccount.address, SHARES.second - 1);
 
-            expect(await contractToken.connect(firstAccount).getStakeholderShares()).to.equal(SHARES.second);
-            expect(await contractToken.getSoldShares()).to.equal(SHARES.second);
+            expect(await contractToken.connect(secondAccount).getStakeholderShares()).to.equal(SHARES.second - 1);
+            expect(await contractToken.getSoldShares()).to.equal(SHARES.first + SHARES.second - 1);
+        });
+
+        it('should not replace shares for existing stakeholder if there is not enough shares left', async () => {
+            const { firstAccount, secondAccount } = await getAccounts();
+
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+            await contractToken.registerShares(secondAccount.address, SHARES.second);
+
+            await expect(contractToken.registerShares(secondAccount.address, SHARES.second + 1)).to.be.revertedWith('Insufficient share amount');
         });
 
         it('will delete stakeholder from list when changing his shares to 0', async() => {
