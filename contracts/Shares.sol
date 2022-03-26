@@ -24,9 +24,9 @@ contract Shares is Ownable {
 	uint private undistributedTotal;
 
 	uint16 private soldShares;
-	uint16 private totalShares;
+	uint16 private immutable totalShares;
 
-	uint8 private stakeholdersLimit;
+	uint8 private immutable stakeholdersLimit;
 	address[] private registeredStakeholders;
 
 	event StakeholderRegistered(address _address, uint256 _share);
@@ -46,12 +46,12 @@ contract Shares is Ownable {
 		require(registeredStakeholders.length > 1, "There is not enough stakeholders yet");
 
 		csaTotal += msg.value;
-		undistributedTotal += msg.value * (totalShares - getSoldShares()) / totalShares;
+		undistributedTotal += msg.value * (getTotalShares() - getSoldShares()) / getTotalShares();
 
 		emit DividendsReceived(msg.value);
 	}
 
-	function getStakeholderShares() public view returns (uint256) {
+	function getStakeholderShares() external view returns (uint256) {
 		require(stakeholders[_msgSender()].id == _msgSender(), "There is no such stakeholder");
 
 		return stakeholders[_msgSender()].shares;
@@ -73,14 +73,14 @@ contract Shares is Ownable {
 		return getTotalBalance() - unclaimedTotal - undistributedTotal;
 	}
 
-	function getUndistributedDividends() public view returns (uint256) {
+	function getUndistributedDividends() external view returns (uint256) {
 		return undistributedTotal;
 	}
 
-	function registerShares(address _address, uint16 _shares) public onlyOwner {
+	function registerShares(address _address, uint16 _shares) external onlyOwner {
 		require(owner() != _address, "Cannot register shares for the contract owner");
 
-		uint256 availableShares = totalShares - getSoldShares();
+		uint256 availableShares = getTotalShares() - getSoldShares();
 		require(availableShares >= _shares, "Unsufficient share amount");
 		require(stakeholders[_address].id == _address || _shares > 0, "Shares cannot be zero");
 
@@ -97,7 +97,7 @@ contract Shares is Ownable {
 		}
 	}
 
-	function claimDividends() public {
+	function claimDividends() external {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
@@ -176,6 +176,6 @@ contract Shares is Ownable {
 		if (csaTotal == 0) {
 			return 0;
 		}
-		return (stakeholder.shares * csaTotal) / totalShares - stakeholder.csaClaimed;
+		return (stakeholder.shares * csaTotal) / getTotalShares() - stakeholder.csaClaimed;
 	}
 }
