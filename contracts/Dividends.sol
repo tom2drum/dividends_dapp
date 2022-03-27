@@ -53,6 +53,7 @@ contract Dividends is Ownable {
 	event StakeholdersShareChanged(address indexed _address, uint256 _share);
 	event DividendsIssued(uint256 amount);
 	event DividendsReleased(address indexed recipient, uint256 amount);
+	event DividendsWithdrawn(uint256 amount);
 
 	/**
 	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders.
@@ -164,6 +165,18 @@ contract Dividends is Ownable {
 		require(sent, "Failed to send dividends");
 
 		emit DividendsReleased(_msgSender(), amountToPay);
+	}
+
+	function withdrawUndistributed() external onlyOwner {
+		require(undistributedTotal > 0, "Nothing to withdraw");
+		assert(getTotalBalance()  >= undistributedTotal);
+		
+		(bool sent, ) = _msgSender().call{ value: undistributedTotal }("");
+
+		require(sent, "Failed to withdraw dividends");
+		
+		emit DividendsWithdrawn(undistributedTotal);
+		undistributedTotal = 0;
 	}
 
 	function addStakeholder(address _address, uint16 _shares) private {

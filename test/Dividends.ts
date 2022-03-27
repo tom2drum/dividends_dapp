@@ -240,6 +240,31 @@ describe('Dividends', function () {
                 undistributedTotal = await contractToken.getUndistributed();
                 expect(undistributedTotal).to.equal(11_000);
             });
+
+            it('the owner can withdraw them', async() => {
+                const { owner, firstAccount, secondAccount } = await getAccounts();
+                await contractToken.registerShares(firstAccount.address, 10);
+                await contractToken.registerShares(secondAccount.address, 40);
+                await depositDividends(10_000);
+
+                const tx = await contractToken.withdrawUndistributed();
+                const undistributedTotal = await contractToken.getUndistributed();
+
+                expect(tx).to.emit(contractToken, 'DividendsWithdrawn').withArgs(5_000);
+                expect(tx).to.changeEtherBalance(owner, 5_000);
+                expect(undistributedTotal).to.equal(0);
+            });
+
+            it('not owner cannot withdraw them', async() => {
+                const { firstAccount, secondAccount } = await getAccounts();
+                await contractToken.registerShares(firstAccount.address, 10);
+                await contractToken.registerShares(secondAccount.address, 40);
+                await depositDividends(10_000);
+
+                await expect(contractToken.connect(secondAccount).withdrawUndistributed()).to.be.revertedWith('Ownable: caller is not the owner');
+                const undistributedTotal = await contractToken.getUndistributed();
+                expect(undistributedTotal).to.equal(5_000);
+            });
         });
 
     });
