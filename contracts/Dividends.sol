@@ -31,7 +31,6 @@ contract Dividends is Ownable {
 
 	/// @dev Stakeholder structure that holds info about registered stakeholder.
 	struct Stakeholder {
-		address id;
 		uint16 shares; /// @dev Current amount of shares.
 		uint csaClaimed; /// @dev Claimed amount in current shares allocation (csa).
 		uint unclaimedTotal; /// @dev Total unclaimed amount.
@@ -86,7 +85,7 @@ contract Dividends is Ownable {
 	* unauthorized request.
     */
 	function getStakeholderShares() external view returns (uint256) {
-		require(stakeholders[_msgSender()].id == _msgSender(), "There is no such stakeholder");
+		require(stakeholders[_msgSender()].shares != 0, "There is no such stakeholder");
 		return stakeholders[_msgSender()].shares;
 	}
 
@@ -131,7 +130,7 @@ contract Dividends is Ownable {
 
 		uint256 availableShares = getTotalShares() - getSoldShares() + stakeholders[_address].shares;
 		require(availableShares >= _shares, "Insufficient share amount");
-		require(stakeholders[_address].id == _address || _shares > 0, "Shares cannot be zero");
+		require(stakeholders[_address].shares > 0 || _shares > 0, "Shares cannot be zero");
 
 		uint256 pool = getCurrentPool();
 		if (pool > 0) {
@@ -139,7 +138,7 @@ contract Dividends is Ownable {
 			csaTotal = 0;
 		}
 
-		if (stakeholders[_address].id == _address) {
+		if (stakeholders[_address].shares > 0) {
 			changeStakeholderShares(_address, _shares);
 		} else {
 			require(registeredStakeholders.length < stakeholdersLimit, "Cannot add more stakeholders than the limit");
@@ -149,7 +148,7 @@ contract Dividends is Ownable {
 
 	function claim() external {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
-		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
+		require(stakeholder.shares > 0, "There is no such stakeholder");
 
 		uint256 amountToPay = getAmountToPay(stakeholder);
 
@@ -160,7 +159,7 @@ contract Dividends is Ownable {
 		unclaimedTotal -= stakeholder.unclaimedTotal;
 		stakeholders[_msgSender()].csaClaimed += amountToPay - stakeholder.unclaimedTotal;
 		stakeholders[_msgSender()].unclaimedTotal = 0;
-		(bool sent, ) = stakeholder.id.call{ value: amountToPay }("");
+		(bool sent, ) = _msgSender().call{ value: amountToPay }("");
 
 		require(sent, "Failed to send dividends");
 
@@ -168,7 +167,7 @@ contract Dividends is Ownable {
 	}
 
 	function addStakeholder(address _address, uint16 _shares) private {
-		Stakeholder memory stakeholder = Stakeholder({ id: _address, shares: _shares, csaClaimed: 0, unclaimedTotal: 0 });
+		Stakeholder memory stakeholder = Stakeholder({ shares: _shares, csaClaimed: 0, unclaimedTotal: 0 });
 
 		stakeholders[_address] = stakeholder;
 
