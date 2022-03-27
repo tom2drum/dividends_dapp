@@ -126,6 +126,13 @@ contract Dividends is Ownable {
 		return undistributedTotal;
 	}
 
+	function getAmountToClaim() external view returns (uint256) {
+		Stakeholder memory stakeholder = stakeholders[_msgSender()];
+		require(stakeholder.shares > 0, "There is no such stakeholder");
+
+		return getAmountToPay(stakeholder);
+	}
+
 	function registerShares(address _address, uint16 _shares) external onlyOwner {
 		require(owner() != _address, "Cannot register shares for the contract owner");
 
@@ -174,7 +181,7 @@ contract Dividends is Ownable {
 		(bool sent, ) = _msgSender().call{ value: undistributedTotal }("");
 
 		require(sent, "Failed to withdraw dividends");
-		
+
 		emit DividendsWithdrawn(undistributedTotal);
 		undistributedTotal = 0;
 	}

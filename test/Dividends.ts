@@ -25,7 +25,7 @@ describe('Dividends', function () {
         });
     });
 
-    describe('dividends', () => {
+    describe('issue process', () => {
         it('should add dividends to the contract', async function () {
             const { firstAccount, secondAccount } = await getAccounts();
 
@@ -55,6 +55,23 @@ describe('Dividends', function () {
 
             tr = depositDividends(10_000);
             await expect(tr).to.be.revertedWith('There is not enough stakeholders yet');
+        });
+    });
+
+    describe('claim process', () => {
+        it('stakeholder should see how much he can claim', async() => {
+            const { secondAccount } = await registerAccountsAndAddDividends();
+            const amount = await contractToken.connect(secondAccount).getAmountToClaim();
+
+            expect(amount).to.equal(2_000);
+        });
+
+        it('unregistered user cannot claim anything', async() => {
+            const { thirdAccount } = await getAccounts();
+            await registerAccountsAndAddDividends();
+            const tx = contractToken.connect(thirdAccount).getAmountToClaim();
+
+            await expect(tx).to.be.revertedWith('There is no such stakeholder');
         });
 
         describe('initial claim', () => {
@@ -220,53 +237,52 @@ describe('Dividends', function () {
                 expect(balance).to.equal(13_500);
             });
         });
+    });
 
-        describe('undistributed dividends', () => {
-            it('are tracked correctly', async() => {
-                const { firstAccount, secondAccount } = await getAccounts();
-                await contractToken.registerShares(firstAccount.address, 10);
-                await contractToken.registerShares(secondAccount.address, 40);
-    
-                let undistributedTotal = await contractToken.getUndistributed();
-                expect(undistributedTotal).to.equal(0);
-    
-                await depositDividends(10_000);
-                undistributedTotal = await contractToken.getUndistributed();
-                expect(undistributedTotal).to.equal(5_000);
-                
-                
-                await contractToken.registerShares(firstAccount.address, 30);
-                await depositDividends(20_000);
-                undistributedTotal = await contractToken.getUndistributed();
-                expect(undistributedTotal).to.equal(11_000);
-            });
+    describe('undistributed dividends', () => {
+        it('are tracked correctly', async() => {
+            const { firstAccount, secondAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, 10);
+            await contractToken.registerShares(secondAccount.address, 40);
 
-            it('the owner can withdraw them', async() => {
-                const { owner, firstAccount, secondAccount } = await getAccounts();
-                await contractToken.registerShares(firstAccount.address, 10);
-                await contractToken.registerShares(secondAccount.address, 40);
-                await depositDividends(10_000);
+            let undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(0);
 
-                const tx = await contractToken.withdrawUndistributed();
-                const undistributedTotal = await contractToken.getUndistributed();
-
-                expect(tx).to.emit(contractToken, 'DividendsWithdrawn').withArgs(5_000);
-                expect(tx).to.changeEtherBalance(owner, 5_000);
-                expect(undistributedTotal).to.equal(0);
-            });
-
-            it('not owner cannot withdraw them', async() => {
-                const { firstAccount, secondAccount } = await getAccounts();
-                await contractToken.registerShares(firstAccount.address, 10);
-                await contractToken.registerShares(secondAccount.address, 40);
-                await depositDividends(10_000);
-
-                await expect(contractToken.connect(secondAccount).withdrawUndistributed()).to.be.revertedWith('Ownable: caller is not the owner');
-                const undistributedTotal = await contractToken.getUndistributed();
-                expect(undistributedTotal).to.equal(5_000);
-            });
+            await depositDividends(10_000);
+            undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(5_000);
+            
+            
+            await contractToken.registerShares(firstAccount.address, 30);
+            await depositDividends(20_000);
+            undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(11_000);
         });
 
+        it('the owner can withdraw them', async() => {
+            const { owner, firstAccount, secondAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, 10);
+            await contractToken.registerShares(secondAccount.address, 40);
+            await depositDividends(10_000);
+
+            const tx = await contractToken.withdrawUndistributed();
+            const undistributedTotal = await contractToken.getUndistributed();
+
+            expect(tx).to.emit(contractToken, 'DividendsWithdrawn').withArgs(5_000);
+            expect(tx).to.changeEtherBalance(owner, 5_000);
+            expect(undistributedTotal).to.equal(0);
+        });
+
+        it('not owner cannot withdraw them', async() => {
+            const { firstAccount, secondAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, 10);
+            await contractToken.registerShares(secondAccount.address, 40);
+            await depositDividends(10_000);
+
+            await expect(contractToken.connect(secondAccount).withdrawUndistributed()).to.be.revertedWith('Ownable: caller is not the owner');
+            const undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(5_000);
+        });
     });
 
     describe('shares', () => {
