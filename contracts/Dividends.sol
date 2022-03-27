@@ -27,7 +27,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract Dividends is Ownable {
 
 	/// @notice Maximum amount of stakeholders in the contract.
-	uint public constant STAKEHOLDERS_LIMIT = 20;
+	uint8 public constant STAKEHOLDERS_LIMIT = 20;
 
 	/// @dev Stakeholder structure that holds info about registered stakeholder.
 	struct Stakeholder {
@@ -55,14 +55,20 @@ contract Dividends is Ownable {
 	event DividendsReleased(address indexed recipient, uint256 amount);
 	event DividendsWithdrawn(uint256 amount);
 
+	error UnauthorizedRequest();
+	error InsufficientFunds(uint available, uint requested);
+	error InsufficientShareAmount(uint16 available, uint16 requested);
+	error NotEnoughStakeholders(uint current, uint16 needed);
+	error StakeholdersLimitReached(uint8 limit);
+
 	/**
 	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders.
 	* @param _totalShares Total amount of shares that can be sold.
 	* @param _stakeholdersLimit Total amount of stakeholders that can be registered.
 	*/
 	constructor(uint16 _totalShares, uint8 _stakeholdersLimit) {
-		require(_totalShares > 1, "Total number of shares should be greater than 1");
-		require(_stakeholdersLimit <= STAKEHOLDERS_LIMIT, "Maximum allowed stakeholders exceeded");
+		require(_totalShares > 1, "Shares amount is too low");
+		require(_stakeholdersLimit <= STAKEHOLDERS_LIMIT, "Stakeholders limit violated");
 
 		totalShares = _totalShares;
 		stakeholdersLimit = _stakeholdersLimit;
@@ -73,7 +79,9 @@ contract Dividends is Ownable {
 	* The received amount will be logged with { DividendsIssued } event.
     */
 	receive() external payable virtual onlyOwner {
-		require(registeredStakeholders.length > 1, "There is not enough stakeholders yet");
+		if(registeredStakeholders.length < 2) {
+			revert NotEnoughStakeholders(registeredStakeholders.length, 2);
+		}
 
 		csaTotal += msg.value;
 		undistributedTotal += msg.value * (getTotalShares() - getSoldShares()) / getTotalShares();
@@ -86,21 +94,32 @@ contract Dividends is Ownable {
 	* unauthorized request.
     */
 	function getStakeholderShares() external view returns (uint256) {
-		require(stakeholders[_msgSender()].shares != 0, "There is no such stakeholder");
+		if(stakeholders[_msgSender()].shares == 0) {
+			revert UnauthorizedRequest();
+		}
 		return stakeholders[_msgSender()].shares;
+	}
+
+	function getAmountToClaim() external view returns (uint256) {
+		Stakeholder memory stakeholder = stakeholders[_msgSender()];
+		if(stakeholder.shares == 0) {
+			revert UnauthorizedRequest();
+		}
+
+		return getAmountToPay(stakeholder);
 	}
 
 	/**
     * @dev Getter for total amount of sold shares.
     */
-	function getSoldShares() public view returns (uint256) {
+	function getSoldShares() public view returns (uint16) {
 		return soldShares;
 	}
 
 	/**
     * @dev Getter for total amount of shares.
     */
-	function getTotalShares() public view returns (uint256) {
+	function getTotalShares() public view returns (uint16) {
 		return totalShares;
 	}
 
@@ -126,19 +145,23 @@ contract Dividends is Ownable {
 		return undistributedTotal;
 	}
 
-	function getAmountToClaim() external view returns (uint256) {
-		Stakeholder memory stakeholder = stakeholders[_msgSender()];
-		require(stakeholder.shares > 0, "There is no such stakeholder");
-
-		return getAmountToPay(stakeholder);
-	}
-
 	function registerShares(address _address, uint16 _shares) external onlyOwner {
-		require(owner() != _address, "Cannot register shares for the contract owner");
+		require(owner() != _address, "Owner cannot be a stakeholder");
 
-		uint256 availableShares = getTotalShares() - getSoldShares() + stakeholders[_address].shares;
-		require(availableShares >= _shares, "Insufficient share amount");
-		require(stakeholders[_address].shares > 0 || _shares > 0, "Shares cannot be zero");
+		if(stakeholders[_address].shares == 0) {
+			if(registeredStakeholders.length == stakeholdersLimit) {
+				revert StakeholdersLimitReached(stakeholdersLimit);
+			}
+
+			if(_shares == 0) {
+				revert("Shares cannot be zero");
+			}
+		}
+
+		uint16 availableShares = getTotalShares() - getSoldShares() + stakeholders[_address].shares;
+		if (availableShares < _shares) {
+			revert InsufficientShareAmount(availableShares, _shares);
+		}
 
 		uint256 pool = getCurrentPool();
 		if (pool > 0) {
@@ -149,19 +172,23 @@ contract Dividends is Ownable {
 		if (stakeholders[_address].shares > 0) {
 			changeStakeholderShares(_address, _shares);
 		} else {
-			require(registeredStakeholders.length < stakeholdersLimit, "Cannot add more stakeholders than the limit");
 			addStakeholder(_address, _shares);
 		}
 	}
 
 	function claim() external {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
-		require(stakeholder.shares > 0, "There is no such stakeholder");
+		if(stakeholder.shares == 0) {
+			revert UnauthorizedRequest();
+		}
 
 		uint256 amountToPay = getAmountToPay(stakeholder);
+		uint256 balance = getTotalBalance();
 
 		require(amountToPay > 0, "No dividends to pay");
-		require(amountToPay <= getTotalBalance(), "Not enought money in the pool");
+		if(amountToPay > balance) {
+			revert InsufficientFunds(balance, amountToPay);
+		}
 
 		payedTotal += amountToPay;
 		unclaimedTotal -= stakeholder.unclaimedTotal;
