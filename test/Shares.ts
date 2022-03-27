@@ -33,13 +33,13 @@ describe('Shares', function () {
             await contractToken.registerShares(secondAccount.address, SHARES.second);
 
             let tr = await depositDividends(10_000);
-            await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(10_000);
+            await expect(tr).to.emit(contractToken, 'DividendsIssued').withArgs(10_000);
 
             let dividends = await contractToken.getTotalBalance();
             expect(dividends).to.equal(10_000);
 
             tr = await depositDividends(10_000);
-            await expect(tr).to.emit(contractToken, 'DividendsReceived').withArgs(10_000);
+            await expect(tr).to.emit(contractToken, 'DividendsIssued').withArgs(10_000);
 
             dividends = await contractToken.getTotalBalance();
             expect(dividends).to.equal(20_000);
