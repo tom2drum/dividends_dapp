@@ -49,10 +49,10 @@ contract Dividends is Ownable {
 	uint8 private immutable stakeholdersLimit;
 	address[] private registeredStakeholders; /// @dev Array of registered stakeholders addresses.
 
-	event StakeholderRegistered(address _address, uint256 _share);
-	event StakeholdersShareChanged(address _address, uint256 _share);
+	event StakeholderRegistered(address indexed _address, uint256 _share);
+	event StakeholdersShareChanged(address indexed _address, uint256 _share);
 	event DividendsIssued(uint256 amount);
-	event DividendsReleased(address recipient, uint256 amount);
+	event DividendsReleased(address indexed recipient, uint256 amount);
 
 	/**
 	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders.
