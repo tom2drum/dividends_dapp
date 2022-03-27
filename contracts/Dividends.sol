@@ -122,7 +122,7 @@ contract Dividends is Ownable {
 	/**
     * @dev Getter for total amount of undistributed dividends.
     */
-	function getUndistributedDividends() external view returns (uint256) {
+	function getUndistributed() external view returns (uint256) {
 		return undistributedTotal;
 	}
 
@@ -135,7 +135,7 @@ contract Dividends is Ownable {
 
 		uint256 pool = getCurrentPool();
 		if (pool > 0) {
-			distributeUnclaimedDividends();
+			distributeUnclaimed();
 			csaTotal = 0;
 		}
 
@@ -147,7 +147,7 @@ contract Dividends is Ownable {
 		}
 	}
 
-	function claimDividends() external {
+	function claim() external {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 		require(stakeholder.id == _msgSender(), "There is no such stakeholder");
 
@@ -209,7 +209,7 @@ contract Dividends is Ownable {
 		}
 	}
 
-	function distributeUnclaimedDividends() private {
+	function distributeUnclaimed() private {
 		for (uint index = 0; index < registeredStakeholders.length; index++) {
 			uint unclaimedAmount = getCsaUnclaimedAmount(stakeholders[registeredStakeholders[index]]);
 			stakeholders[registeredStakeholders[index]].unclaimedTotal += unclaimedAmount;

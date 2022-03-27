@@ -60,7 +60,7 @@ describe('Dividends', function () {
         describe('initial claim', () => {
             it('stakeholder should be able to claim dividends', async function () {
                 const { secondAccount } = await registerAccountsAndAddDividends();
-                const tx = await contractToken.connect(secondAccount).claimDividends();
+                const tx = await contractToken.connect(secondAccount).claim();
 
                 expect(tx)
                     .to.emit(contractToken, 'DividendsReleased')
@@ -71,9 +71,9 @@ describe('Dividends', function () {
 
             it('will not release dividends if stakeholder has already claimed all available amount', async () => {
                 const { secondAccount } = await registerAccountsAndAddDividends();
-                await contractToken.connect(secondAccount).claimDividends();
+                await contractToken.connect(secondAccount).claim();
 
-                await expect(contractToken.connect(secondAccount).claimDividends()).to.be.revertedWith('No dividends to pay');
+                await expect(contractToken.connect(secondAccount).claim()).to.be.revertedWith('No dividends to pay');
             });
 
             it('will not pay dividends to unknown stakeholder', async () => {
@@ -83,7 +83,7 @@ describe('Dividends', function () {
                 await contractToken.registerShares(secondAccount.address, SHARES.second);
                 await depositDividends(10_000);
 
-                await expect(contractToken.claimDividends()).to.be.revertedWith('There is no such stakeholder');
+                await expect(contractToken.claim()).to.be.revertedWith('There is no such stakeholder');
             });
         });
 
@@ -91,10 +91,10 @@ describe('Dividends', function () {
             it('send correct amount on the second claim for the same address', async () => {
                 const { secondAccount } = await registerAccountsAndAddDividends();
 
-                await contractToken.connect(secondAccount).claimDividends();
+                await contractToken.connect(secondAccount).claim();
                 await depositDividends(5_000);
 
-                const tx = await contractToken.connect(secondAccount).claimDividends();
+                const tx = await contractToken.connect(secondAccount).claim();
                 expect(tx).to.emit(contractToken, 'DividendsReleased').withArgs(secondAccount.address, 1_000);
 
                 expect(tx).to.changeEtherBalance(secondAccount, 1_000);
@@ -103,10 +103,10 @@ describe('Dividends', function () {
             it('send correct amount on the second claim for another address', async () => {
                 const { firstAccount, secondAccount } = await registerAccountsAndAddDividends();
 
-                await contractToken.connect(secondAccount).claimDividends();
+                await contractToken.connect(secondAccount).claim();
                 await depositDividends(5_000);
 
-                const tx = await contractToken.connect(firstAccount).claimDividends();
+                const tx = await contractToken.connect(firstAccount).claim();
                 expect(tx).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 12_000);
 
                 expect(tx).to.changeEtherBalance(secondAccount, 12_000);
@@ -115,10 +115,10 @@ describe('Dividends', function () {
             it('will empty the pool when all dividends are paid', async () => {
                 const { firstAccount, secondAccount } = await registerAccountsAndAddDividends();
 
-                await contractToken.connect(firstAccount).claimDividends();
+                await contractToken.connect(firstAccount).claim();
                 await depositDividends(5_000);
-                await contractToken.connect(secondAccount).claimDividends();
-                await contractToken.connect(firstAccount).claimDividends();
+                await contractToken.connect(secondAccount).claim();
+                await contractToken.connect(firstAccount).claim();
 
                 const balance = await contractToken.getTotalBalance();
                 expect(balance).to.equal(0);
@@ -132,7 +132,7 @@ describe('Dividends', function () {
                 await contractToken.registerShares(firstAccount.address, 10);
                 await contractToken.registerShares(secondAccount.address, 40);
                 await depositDividends(10_000);
-                await contractToken.connect(firstAccount).claimDividends();
+                await contractToken.connect(firstAccount).claim();
                 await depositDividends(5_000);
                 await contractToken.registerShares(thirdAccount.address, 20);
             });
@@ -141,15 +141,15 @@ describe('Dividends', function () {
                 it('calculates correct unclaimed amounts for each stakeholder and rest of the balance is correct', async() => {
                     const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
     
-                    const tx1 = await contractToken.connect(firstAccount).claimDividends();
+                    const tx1 = await contractToken.connect(firstAccount).claim();
                     await expect(tx1).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 500);
                     await expect(tx1).to.changeEtherBalance(firstAccount, 500);
     
-                    const tx2 = await contractToken.connect(secondAccount).claimDividends();
+                    const tx2 = await contractToken.connect(secondAccount).claim();
                     await expect(tx2).to.emit(contractToken, 'DividendsReleased').withArgs(secondAccount.address, 6_000);
                     await expect(tx2).to.changeEtherBalance(secondAccount, 6_000);
     
-                    const tx3 = contractToken.connect(thirdAccount).claimDividends();
+                    const tx3 = contractToken.connect(thirdAccount).claim();
                     await expect(tx3).to.be.revertedWith('No dividends to pay');
 
                     const balance = await contractToken.getTotalBalance();
@@ -161,21 +161,21 @@ describe('Dividends', function () {
                 beforeEach(async() => {
                     const { firstAccount } = await getAccounts();
                     await depositDividends(5_000);
-                    await contractToken.connect(firstAccount).claimDividends();
+                    await contractToken.connect(firstAccount).claim();
                     await depositDividends(10_000);
                 })
             
                 it('calculates correct unclaimed amounts for each stakeholder and rest of the balance is correct', async() => {
                     const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
-                    const tx1 = await contractToken.connect(firstAccount).claimDividends();
+                    const tx1 = await contractToken.connect(firstAccount).claim();
                     await expect(tx1).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 1_000);
                     await expect(tx1).to.changeEtherBalance(firstAccount, 1_000);
 
-                    const tx2 = await contractToken.connect(secondAccount).claimDividends();
+                    const tx2 = await contractToken.connect(secondAccount).claim();
                     await expect(tx2).to.emit(contractToken, 'DividendsReleased').withArgs(secondAccount.address, 12_000);
                     await expect(tx2).to.changeEtherBalance(secondAccount, 12_000);
 
-                    const tx3 = await contractToken.connect(thirdAccount).claimDividends();
+                    const tx3 = await contractToken.connect(thirdAccount).claim();
                     await expect(tx3).to.emit(contractToken, 'DividendsReleased').withArgs(thirdAccount.address, 3_000);
                     await expect(tx3).to.changeEtherBalance(thirdAccount, 3_000);
 
@@ -192,7 +192,7 @@ describe('Dividends', function () {
                 await contractToken.registerShares(secondAccount.address, 40);
                 await depositDividends(10_000);
 
-                await contractToken.connect(firstAccount).claimDividends();
+                await contractToken.connect(firstAccount).claim();
                 await depositDividends(5_000);
 
                 await contractToken.registerShares(firstAccount.address, 20);
@@ -202,17 +202,17 @@ describe('Dividends', function () {
             it('calculates correct unclaimed amounts for each stakeholder and rest of the balance is correct', async () => {
                 const { firstAccount, secondAccount } = await getAccounts();
                 
-                const tx11 = await contractToken.connect(firstAccount).claimDividends();
+                const tx11 = await contractToken.connect(firstAccount).claim();
                 await expect(tx11).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 1_500);
                 await expect(tx11).to.changeEtherBalance(firstAccount, 1_500);
 
                 await depositDividends(10_000);
 
-                const tx12 = await contractToken.connect(firstAccount).claimDividends();
+                const tx12 = await contractToken.connect(firstAccount).claim();
                 await expect(tx12).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 2_000);
                 await expect(tx12).to.changeEtherBalance(firstAccount, 2_000);
 
-                const tx2 = await contractToken.connect(secondAccount).claimDividends();
+                const tx2 = await contractToken.connect(secondAccount).claim();
                 await expect(tx2).to.emit(contractToken, 'DividendsReleased').withArgs(secondAccount.address, 12_000);
                 await expect(tx2).to.changeEtherBalance(secondAccount, 12_000);
 
@@ -227,17 +227,17 @@ describe('Dividends', function () {
                 await contractToken.registerShares(firstAccount.address, 10);
                 await contractToken.registerShares(secondAccount.address, 40);
     
-                let undistributedTotal = await contractToken.getUndistributedDividends();
+                let undistributedTotal = await contractToken.getUndistributed();
                 expect(undistributedTotal).to.equal(0);
     
                 await depositDividends(10_000);
-                undistributedTotal = await contractToken.getUndistributedDividends();
+                undistributedTotal = await contractToken.getUndistributed();
                 expect(undistributedTotal).to.equal(5_000);
                 
                 
                 await contractToken.registerShares(firstAccount.address, 30);
                 await depositDividends(20_000);
-                undistributedTotal = await contractToken.getUndistributedDividends();
+                undistributedTotal = await contractToken.getUndistributed();
                 expect(undistributedTotal).to.equal(11_000);
             });
         });
