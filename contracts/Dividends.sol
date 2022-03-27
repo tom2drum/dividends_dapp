@@ -24,7 +24,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 *	The contract also accumulate the part of the dividends that was not distributed among parties due to
 *	incomplete shares allocation. The owner can withdraw this amount of money at any given point.
  */
-contract Shares is Ownable {
+contract Dividends is Ownable {
 
 	/// @notice Maximum amount of stakeholders in the contract.
 	uint public constant STAKEHOLDERS_LIMIT = 20;

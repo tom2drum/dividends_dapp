@@ -1,12 +1,12 @@
 import { ethers } from 'hardhat';
 
 async function main() {
-    const Shares = await ethers.getContractFactory('Shares');
-    const sharesToken = await Shares.deploy(10000);
+    const Dividends = await ethers.getContractFactory('Dividends');
+    const contractToken = await Dividends.deploy(10000);
 
-    await sharesToken.deployed();
+    await contractToken.deployed();
 
-    console.log('Shares deployed to:', sharesToken.address);
+    console.log('Dividends deployed to:', contractToken.address);
 }
 
 main().catch((error) => {

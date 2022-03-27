@@ -1,27 +1,27 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { Shares } from '../typechain/Shares';
+import { Dividends } from '../typechain/Dividends';
 
 const SHARES = { first: 80, second: 20 };
 
-let contractToken: Shares;
+let contractToken: Dividends;
 
 beforeEach(async () => {
-    const Shares = await ethers.getContractFactory('Shares');
-    contractToken = await Shares.deploy(SHARES.first + SHARES.second, 10);
+    const Dividends = await ethers.getContractFactory('Dividends');
+    contractToken = await Dividends.deploy(SHARES.first + SHARES.second, 10);
     await contractToken.deployed();
 });
 
-describe('Shares', function () {
+describe('Dividends', function () {
     describe('deploy', () => {
         it('will not deploy contract with invalid share amount', async () => {
-            const Shares = await ethers.getContractFactory('Shares');
-            await expect(Shares.deploy(1, 10)).to.be.revertedWith('Total number of shares should be greater than 1');
+            const Dividends = await ethers.getContractFactory('Dividends');
+            await expect(Dividends.deploy(1, 10)).to.be.revertedWith('Total number of shares should be greater than 1');
         });
 
         it('will not deploy contract with invalid max stakeholders number', async () => {
-            const Shares = await ethers.getContractFactory('Shares');
-            await expect(Shares.deploy(100, 30)).to.be.revertedWith('Maximum allowed stakeholders exceeded');
+            const Dividends = await ethers.getContractFactory('Dividends');
+            await expect(Dividends.deploy(100, 30)).to.be.revertedWith('Maximum allowed stakeholders exceeded');
         });
     });
 
@@ -305,8 +305,8 @@ describe('Shares', function () {
         });
 
         it('should not register new stakeholder when limit has reached', async () => {
-            const Shares = await ethers.getContractFactory('Shares');
-            const contractToken = await Shares.deploy(SHARES.first + SHARES.second, 2);
+            const Dividends = await ethers.getContractFactory('Dividends');
+            const contractToken = await Dividends.deploy(SHARES.first + SHARES.second, 2);
             await contractToken.deployed();
             const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
             await contractToken.registerShares(firstAccount.address, 10);
