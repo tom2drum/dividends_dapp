@@ -6,7 +6,7 @@ import App from './App';
 
 ReactDOM.render(
     <React.StrictMode>
-        <App />
+        <App/>
     </React.StrictMode>,
     // eslint-disable-next-line no-undef
     window.document.getElementById('root')
