@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Container } from 'reactstrap';
 import { ReactComponent as Logo } from './logo.svg';
 
 import styles from  './Header.module.css';
@@ -7,10 +7,10 @@ import styles from  './Header.module.css';
 const Header = () => {
     return (
         <header className={ styles.root }>
-            <div className={ styles.content }>
+            <Container className={ styles.container }>
                 <Logo className={ styles.logo }/>
                 <span>DONKYE ltd.</span>
-            </div>
+            </Container>
         </header>
     );
 };

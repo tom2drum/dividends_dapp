@@ -6,9 +6,7 @@
     font-weight: bold;
 }
 
-.content {
-    max-width: 1320px;
-    margin: 0 auto;
+.container {
     display: flex;
     align-items: center;
 }
