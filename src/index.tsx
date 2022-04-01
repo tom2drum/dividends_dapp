@@ -11,5 +11,5 @@ ReactDOM.render(
         </AppContextProvider>
     </React.StrictMode>,
     // eslint-disable-next-line no-undef
-    window.document.getElementById('root')
+    window.document.getElementById('root'),
 );

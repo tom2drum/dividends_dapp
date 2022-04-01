@@ -36,9 +36,9 @@ function contextReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
         case 'UPDATE_STAKEHOLDER': {
             const isAddressExist = state.stakeholders.some(({ address }) => address.toLowerCase() === action.payload.address.toLowerCase());
-            if (isAddressExist){
+            if (isAddressExist) {
                 const stakeholders = state.stakeholders.map((stakeholder) => {
-                    if(stakeholder.address === action.payload.address){
+                    if(stakeholder.address === action.payload.address) {
                         return { ...action.payload };
                     }
                     return stakeholder;
@@ -49,7 +49,7 @@ function contextReducer(state: AppState, action: Action): AppState {
 
             return {
                 ...state,
-                stakeholders: [ ...state.stakeholders, action.payload ]
+                stakeholders: [ ...state.stakeholders, action.payload ],
             };
         }
 

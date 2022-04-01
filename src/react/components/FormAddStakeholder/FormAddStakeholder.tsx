@@ -21,20 +21,20 @@ const FormAddStakeholder = () => {
         const form = event.target as HTMLFormElement;
         const isValid = form.checkValidity();
 
-        if(isValid){
+        if(isValid) {
             const accountElement = form.elements.namedItem('account');
             const sharesElement = form.elements.namedItem('shares');
             if (
                 accountElement !== null && 'value' in accountElement && 
                 sharesElement !== null && 'value' in sharesElement
-            ){
+            ) {
                 try {
                     const address = accountElement.value;
                     const shares = Number(sharesElement.value);
                     const transaction = await contract?.registerShares(accountElement.value, Number(sharesElement.value));
                     const { status } = await transaction.wait();
 
-                    if(status === 0){
+                    if(status === 0) {
                         throw new Error('Transaction was reverted');
                     }
                     updateStakeholder({

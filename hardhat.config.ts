@@ -13,7 +13,7 @@ dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
-task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
+task('accounts', 'Prints the list of accounts', async(taskArgs, hre) => {
     const accounts = await hre.ethers.getSigners();
 
     for (const account of accounts) {
@@ -49,9 +49,9 @@ const config: HardhatUserConfig = {
         test: {
             tasks: [ { command: 'test', params: { testFiles: [ '{path}' ] } } ],
             files: [ './test/**/*' ],
-            verbose: true
-        }
-    }
+            verbose: true,
+        },
+    },
 };
 
 export default config;

@@ -10,11 +10,11 @@ module.exports = {
         'react-app', 
         'react-app/jest',
         'eslint:recommended',
-        'plugin:node/recommended'
+        'plugin:node/recommended',
     ],
     settings: {
         node: {
-            tryExtensions: [ '.js', '.json', '.node', '.ts', '.tsx', '.d.ts' ]
+            tryExtensions: [ '.js', '.json', '.node', '.ts', '.tsx', '.d.ts' ],
         },
     },
     parser: '@typescript-eslint/parser',
@@ -66,5 +66,15 @@ module.exports = {
         '@typescript-eslint/indent': [ 'error', 4, {
             SwitchCase: 1,
         } ],
+        'space-before-function-paren': [ 'error', 'never' ],
+        'space-before-blocks': [ 'error', 'always' ],
+        'space-in-parens': [ 'error', 'never' ],
+        'space-infix-ops': 'error',
+        'space-unary-ops': 'off',
+        'template-curly-spacing': [ 'error', 'always' ],
+        'arrow-spacing': [ 'error', { before: true, after: true } ],
+        'comma-dangle': [ 'error', 'always-multiline' ],
+        'comma-spacing': [ 'error' ],
+        'comma-style': [ 'error', 'last' ],
     },
 };

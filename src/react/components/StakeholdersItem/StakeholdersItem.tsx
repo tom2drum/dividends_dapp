@@ -20,7 +20,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
             <td className="col-3">
                 { shares === null ? <Eye className={ styles.icon }/> : shares }
             </td>
-            <td className="col-2">{ unclaimed === null ? <Eye className={ styles.icon }/> : `${unclaimed}ETH` }</td>
+            <td className="col-2">{ unclaimed === null ? <Eye className={ styles.icon }/> : `${ unclaimed }ETH` }</td>
             <td className="col-2">
                 <Button color="info" size="sm" outline>Claim</Button>
             </td>
