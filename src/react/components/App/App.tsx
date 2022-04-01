@@ -5,6 +5,7 @@ import Header from '../Header/Header';
 import FormAddStakeholder from '../FormAddStakeholder/FormAddStakeholder';
 import StakeholdersList from '../StakeholdersList/StakeholdersList';
 import FormIssueDividends from '../FormIssueDividends/FormIssueDividends';
+import Notification from '../Notification/Notification';
 import { useAppContext } from '../../context';
 
 import styles from './App.module.css';
@@ -38,6 +39,7 @@ function App() {
                     </Col>
                 </Row>
             </Container>
+            <Notification/>
         </div>
     );
 }

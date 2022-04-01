@@ -2,6 +2,7 @@ import React from 'react';
 import { Col, Input, Form, FormGroup, Label, Button } from 'reactstrap';
 
 import { useAppContext } from '../../context';
+import { useNotification } from '../../contexts/notification';
 
 const ACCOUNTS = [
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -15,6 +16,7 @@ const ACCOUNTS = [
 const FormAddStakeholder = () => {
 
     const { updateStakeholder, contract } = useAppContext();
+    const { open: openNotification } = useNotification();
 
     const handleSelectChange = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -33,7 +35,7 @@ const FormAddStakeholder = () => {
                     const shares = Number(sharesElement.value);
                     const transaction = await contract?.registerShares(accountElement.value, Number(sharesElement.value));
                     const { status } = await transaction.wait();
-
+                    
                     if(status === 0) {
                         throw new Error('Transaction was reverted');
                     }
@@ -42,12 +44,14 @@ const FormAddStakeholder = () => {
                         shares,
                         unclaimed: 0,
                     });
-                } catch (error) {
+                    openNotification({ status: 'success', text: 'Successfully changed shares' });
+                } catch (error: any) {
+                    openNotification({ status: 'error', text: error?.data?.message || error.message });
                     console.error(error);
                 }
             }
         }
-    }, [ updateStakeholder, contract ]) ;
+    }, [ updateStakeholder, contract, openNotification ]) ;
 
     return (
         <section>
