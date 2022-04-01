@@ -25,8 +25,8 @@ module.exports = {
         },
     },
     rules: {
+        'indent': 'off',
         'node/no-unsupported-features/es-syntax': [ 'error', { ignores: [ 'modules' ] } ],
-        'indent': [ 'error', 4 ],
         quotes: [ 'error', 'single' ],
         'object-curly-spacing': [ 'error', 'always' ],
         'array-bracket-spacing': [ 'error', 'always' ],
@@ -61,6 +61,9 @@ module.exports = {
             condition: 'parens-new-line',
             logical: 'parens-new-line',
             prop: 'parens-new-line',
+        } ],
+        '@typescript-eslint/indent': [ 'error', 4, {
+            SwitchCase: 1,
         } ],
     },
 };
