@@ -1,27 +1,45 @@
 import React from 'react';
 
+interface Stakeholder {
+    address: string;
+    shares: number;
+    unclaimed: number;
+}
+
 interface AppState {
-    stakeholders: Array<string>;
+    stakeholders: Array<Stakeholder>;
 }
 
 export type AppContextType = AppState & {
-    updateStakeholders: (payload: Array<string>) => void;
+    updateStakeholder: (payload: Stakeholder) => void;
 }
 
-interface ActionAddStakeholder {
-    type: 'ADD_STAKEHOLDER';
-    payload: Array<string>;
+interface ActionUpdateStakeholder {
+    type: 'UPDATE_STAKEHOLDER';
+    payload: Stakeholder;
 }
 
-type Action = ActionAddStakeholder;
+type Action = ActionUpdateStakeholder;
 
-function contextReducer(state: AppState, action: Action) {
+function contextReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
-        case 'ADD_STAKEHOLDER':
+        case 'UPDATE_STAKEHOLDER': {
+            if(state.stakeholders.some(({ address }) => address === action.payload.address)){
+                const stakeholders = state.stakeholders.map((stakeholder) => {
+                    if(stakeholder.address === action.payload.address){
+                        return { ...action.payload }
+                    }
+                    return stakeholder;
+                });
+
+                return { ...state, stakeholders };
+            }
+
             return {
                 ...state,
-                stakeholders: [ ...state.stakeholders, ...action.payload ]
+                stakeholders: [ ...state.stakeholders, action.payload ]
             };
+        }
 
         default:
             return state;
@@ -32,19 +50,19 @@ const initialState: AppState = {
     stakeholders: [],
 };
 
-function useContextValue() {
+function useContextValue(): AppContextType {
     const [ { stakeholders }, dispatch ] = React.useReducer(contextReducer, initialState);
 
-    const updateStakeholders = React.useCallback((payload: Array<string>) => {
-        dispatch({ type: 'ADD_STAKEHOLDER', payload })
+    const updateStakeholder = React.useCallback((payload: Stakeholder) => {
+        dispatch({ type: 'UPDATE_STAKEHOLDER', payload })
     }, []);
 
     return React.useMemo(() => {
         return {
             stakeholders,
-            updateStakeholders,
+            updateStakeholder,
         }
-    }, [ stakeholders, updateStakeholders ]);
+    }, [ stakeholders, updateStakeholder ]);
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);

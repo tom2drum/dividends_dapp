@@ -1,7 +1,8 @@
 import React from 'react';
-import { Table, Button } from 'reactstrap';
+import { Table } from 'reactstrap';
 
 import { useAppContext } from '../../context';
+import StakeholdersItem from '../StakeholdersItem/StakeholdersItem';
 
 const StakeholdersList = () => {
 
@@ -15,22 +16,14 @@ const StakeholdersList = () => {
                     <tr>
                         <th> # </th>
                         <th> Account Number </th>
+                        <th> Shares </th>
                         <th> Unclaimed Amount </th>
                         <th> Actions </th>
                     </tr>
                 </thead>
                 <tbody>
-                    { stakeholders.map((address, index) => {
-                        return (
-                            <tr key={ address }>
-                                <th className="col-1" scope="row">{ index + 1 }</th>
-                                <td className="col-4">{ address }</td>
-                                <td className="col-3"> 800 ETH </td>
-                                <td className="col-4">
-                                    <Button color="info" size="sm" outline>Claim</Button>
-                                </td>
-                            </tr>
-                        )
+                    { stakeholders.map((stakeholder, index) => {
+                        return <StakeholdersItem key={ stakeholder.address } { ...stakeholder } index={ index }/>
                     }) }
                 </tbody>
             </Table>

@@ -16,7 +16,7 @@ const ACCOUNTS = [
 
 const FormAddStakeholder = () => {
 
-    const { updateStakeholders } = useAppContext();
+    const { updateStakeholder } = useAppContext();
 
     const handleSelectChange = React.useCallback((event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -24,11 +24,19 @@ const FormAddStakeholder = () => {
         const isValid = form.checkValidity();
         if(isValid){
             const accountElement = form.elements.namedItem('account');
-            if (accountElement && 'value' in accountElement){
-                updateStakeholders([ accountElement.value ])
+            const sharesElement = form.elements.namedItem('shares');
+            if (
+                accountElement !== null && 'value' in accountElement && 
+                sharesElement !== null && 'value' in sharesElement
+            ){
+                updateStakeholder({
+                    address: accountElement.value,
+                    shares: Number(sharesElement.value),
+                    unclaimed: 0,
+                })
             }
         }
-    }, [ updateStakeholders ]) ;
+    }, [ updateStakeholder ]) ;
 
     return (
         <section>
