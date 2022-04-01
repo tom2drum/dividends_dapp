@@ -26,6 +26,7 @@ module.exports = {
     },
     rules: {
         'indent': 'off',
+        semi: [ 'error', 'always' ],
         'node/no-unsupported-features/es-syntax': [ 'error', { ignores: [ 'modules' ] } ],
         quotes: [ 'error', 'single' ],
         'object-curly-spacing': [ 'error', 'always' ],

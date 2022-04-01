@@ -145,6 +145,10 @@ contract Dividends is Ownable {
 		return undistributedTotal;
 	}
 
+	function getStakeholders() external view returns (address[] memory) {
+		return registeredStakeholders;
+	}
+
 	function registerShares(address _address, uint16 _shares) external onlyOwner {
 		require(owner() != _address, "Owner cannot be a stakeholder");
 

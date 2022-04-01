@@ -27,7 +27,7 @@ const FormIssueDividends = ({ className }: Props) => {
                 </InputGroup>
             </Form>
         </section>
-    )
-}
+    );
+};
 
 export default FormIssueDividends;

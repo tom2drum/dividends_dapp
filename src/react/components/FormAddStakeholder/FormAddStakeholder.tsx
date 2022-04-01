@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-debugger */
 import React from 'react';
 import { Col, Input, Form, FormGroup, Label, Button } from 'reactstrap';
 
@@ -12,16 +10,17 @@ const ACCOUNTS = [
     '0x90f79bf6eb2c4f870365e785982e1f101e93b906',
     '0x15d34aaf54267db7d7c367839aaf71a00a2c6a65',
     '0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc',
-]
+];
 
 const FormAddStakeholder = () => {
 
-    const { updateStakeholder } = useAppContext();
+    const { updateStakeholder, contract } = useAppContext();
 
-    const handleSelectChange = React.useCallback((event: React.SyntheticEvent<HTMLFormElement>) => {
+    const handleSelectChange = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const isValid = form.checkValidity();
+
         if(isValid){
             const accountElement = form.elements.namedItem('account');
             const sharesElement = form.elements.namedItem('shares');
@@ -29,14 +28,26 @@ const FormAddStakeholder = () => {
                 accountElement !== null && 'value' in accountElement && 
                 sharesElement !== null && 'value' in sharesElement
             ){
-                updateStakeholder({
-                    address: accountElement.value,
-                    shares: Number(sharesElement.value),
-                    unclaimed: 0,
-                })
+                try {
+                    const address = accountElement.value;
+                    const shares = Number(sharesElement.value);
+                    const transaction = await contract?.registerShares(accountElement.value, Number(sharesElement.value));
+                    const { status } = await transaction.wait();
+
+                    if(status === 0){
+                        throw new Error('Transaction was reverted');
+                    }
+                    updateStakeholder({
+                        address,
+                        shares,
+                        unclaimed: 0,
+                    });
+                } catch (error) {
+                    console.error(error);
+                }
             }
         }
-    }, [ updateStakeholder ]) ;
+    }, [ updateStakeholder, contract ]) ;
 
     return (
         <section>

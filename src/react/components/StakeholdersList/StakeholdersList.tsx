@@ -23,7 +23,7 @@ const StakeholdersList = () => {
                 </thead>
                 <tbody>
                     { stakeholders.map((stakeholder, index) => {
-                        return <StakeholdersItem key={ stakeholder.address } { ...stakeholder } index={ index }/>
+                        return <StakeholdersItem key={ stakeholder.address } { ...stakeholder } index={ index }/>;
                     }) }
                 </tbody>
             </Table>
