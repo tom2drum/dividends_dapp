@@ -69,7 +69,7 @@ function useContextValue(): ContextType {
 }
 
 const NotificationContext = React.createContext<ContextType | undefined>(undefined);
-NotificationContext.displayName = 'App Context';
+NotificationContext.displayName = 'Notification Context';
 
 export function NotificationContextProvider({ children }: { children: React.ReactNode }) {
     const value = useContextValue();
