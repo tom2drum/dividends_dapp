@@ -16,7 +16,7 @@ function App() {
     React.useEffect(() => {
         contract?.getStakeholders()
             .then((addresses: Array<string>) => {
-                const stakeholders = addresses.map((address) => ({ address, shares: null, unclaimed: null }));
+                const stakeholders = addresses.map((address) => ({ address }));
                 setStakeholders(stakeholders);
             })
             .catch(console.error);

@@ -1,13 +1,13 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { Contract } from 'ethers';
+import { Contract, providers } from 'ethers';
 import React from 'react';
 
 import useContract from './hooks/useContract';
 
 interface Stakeholder {
     address: string;
-    shares: number | null;
-    unclaimed: number | null;
+    shares?: number;
+    unclaimed?: number;
 }
 
 interface AppState {
@@ -16,6 +16,7 @@ interface AppState {
 
 export type AppContextType = AppState & {
     contract: Contract | null;
+    provider: providers.Web3Provider | null;
     updateStakeholder: (payload: Stakeholder) => void;
     setStakeholders: (payload: Array<Stakeholder>) => void;
 }
@@ -39,7 +40,7 @@ function contextReducer(state: AppState, action: Action): AppState {
             if (isAddressExist) {
                 const stakeholders = state.stakeholders.map((stakeholder) => {
                     if(stakeholder.address === action.payload.address) {
-                        return { ...action.payload };
+                        return { ...stakeholder, ...action.payload };
                     }
                     return stakeholder;
                 });
@@ -68,7 +69,7 @@ const initialState: AppState = {
 
 function useContextValue(): AppContextType {
     const [ { stakeholders }, dispatch ] = React.useReducer(contextReducer, initialState);
-    const contract = useContract();
+    const { contract, provider } = useContract();
 
     const setStakeholders = React.useCallback((payload: Array<Stakeholder>) => {
         dispatch({ type: 'SET_STAKEHOLDERS', payload });
@@ -82,10 +83,11 @@ function useContextValue(): AppContextType {
         return {
             stakeholders,
             contract,
+            provider,
             setStakeholders,
             updateStakeholder,
         };
-    }, [ stakeholders, updateStakeholder, setStakeholders, contract ]);
+    }, [ stakeholders, updateStakeholder, setStakeholders, contract, provider ]);
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
