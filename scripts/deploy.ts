@@ -1,8 +1,9 @@
 import { ethers } from 'hardhat';
+import { MAX_SHARES_NUM } from '../src/consts';
 
 async function main() {
     const Dividends = await ethers.getContractFactory('Dividends');
-    const contractToken = await Dividends.deploy(10000, 20);
+    const contractToken = await Dividends.deploy(MAX_SHARES_NUM, 20);
 
     await contractToken.deployed();
 

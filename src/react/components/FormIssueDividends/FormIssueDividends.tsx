@@ -16,13 +16,13 @@ const FormIssueDividends = ({ className }: Props) => {
                         placeholder="Enter amount"
                         type="number"
                         min={ 0 }
-                        max={ 1_000_000 }
+                        max={ 5_000 }
                     />
                     <InputGroupText>
                         ETH
                     </InputGroupText>
                     <Button color="success">
-                            Submit
+                        Submit
                     </Button>
                 </InputGroup>
             </Form>

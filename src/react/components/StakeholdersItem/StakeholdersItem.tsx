@@ -6,6 +6,7 @@ import { BigNumber } from 'ethers';
 import RevealValue from '../RevealValue/RevealValue';
 import { useAppContext } from '../../context';
 import formatAddress from '../../utils/formatAddress';
+import { MAX_SHARES_NUM } from '../../../consts';
 
 import styles from './StakeholdersItem.module.css';
 
@@ -38,7 +39,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
                     value={ shares } 
                     onSuccess={ handleSharesRevealSuccess }
                 >
-                    { shares }
+                    { shares } / { MAX_SHARES_NUM.toLocaleString('ru') }
                 </RevealValue>
             </td>
             <td className="col-2 text-end">

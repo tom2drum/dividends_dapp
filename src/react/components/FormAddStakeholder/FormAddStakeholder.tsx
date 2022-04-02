@@ -1,9 +1,10 @@
 import React from 'react';
-import { Col, Input, Form, FormGroup, Label, Button } from 'reactstrap';
+import { Col, Input, Form, FormGroup, Label, Button, InputGroup, InputGroupText } from 'reactstrap';
 
 import { useAppContext } from '../../context';
 import { useNotification } from '../../contexts/notification';
 import formatAddress from '../../utils/formatAddress';
+import { MAX_SHARES_NUM } from '../../../consts';
 
 const ACCOUNTS = [
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -82,14 +83,19 @@ const FormAddStakeholder = () => {
                         Share amount
                     </Label>
                     <Col xs="8">
-                        <Input
-                            id="shares"
-                            placeholder="Enter amount"
-                            type="number"
-                            min={ 0 }
-                            max={ 1_000 }
-                            required
-                        />
+                        <InputGroup>
+                            <Input
+                                id="shares"
+                                placeholder="Enter amount"
+                                type="number"
+                                min={ 0 }
+                                max={ 1_000 }
+                                required
+                            />
+                            <InputGroupText>
+                                / { MAX_SHARES_NUM.toLocaleString('ru') }
+                            </InputGroupText>
+                        </InputGroup>
                     </Col>
                 </FormGroup>
                 <FormGroup row >
