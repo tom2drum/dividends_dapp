@@ -5,6 +5,7 @@ import { BigNumber } from 'ethers';
 
 import RevealValue from '../RevealValue/RevealValue';
 import { useAppContext } from '../../context';
+import formatAddress from '../../utils/formatAddress';
 
 import styles from './StakeholdersItem.module.css';
 
@@ -29,7 +30,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
     return (
         <tr className={ styles.root }>
             <th className="col-1" scope="row">{ index + 1 }</th>
-            <td className="col-4">{ address }</td>
+            <td className="col-4">{ formatAddress(address) }</td>
             <td className="col-3 text-end">
                 <RevealValue<number, BigNumber> 
                     address={ address } 

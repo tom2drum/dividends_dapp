@@ -3,6 +3,7 @@ import { Col, Input, Form, FormGroup, Label, Button } from 'reactstrap';
 
 import { useAppContext } from '../../context';
 import { useNotification } from '../../contexts/notification';
+import formatAddress from '../../utils/formatAddress';
 
 const ACCOUNTS = [
     '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -70,7 +71,7 @@ const FormAddStakeholder = () => {
                         >
                             { ACCOUNTS.map((account) => (
                                 <option key={ account } value={ account }>
-                                    { account }
+                                    { formatAddress(account) }
                                 </option>
                             )) }
                         </Input>
