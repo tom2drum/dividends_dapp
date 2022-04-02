@@ -35,9 +35,9 @@ const FormAddStakeholder = () => {
                     const address = accountElement.value;
                     const shares = Number(sharesElement.value);
                     const transaction = await contract?.registerShares(accountElement.value, Number(sharesElement.value));
-                    const { status } = await transaction.wait();
+                    const result = await transaction?.wait();
                     
-                    if(status === 0) {
+                    if(result?.status === 0) {
                         throw new Error('Transaction was reverted');
                     }
                     updateStakeholder({

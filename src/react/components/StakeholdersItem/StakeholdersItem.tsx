@@ -30,8 +30,8 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
     return (
         <tr className={ styles.root }>
             <th className="col-1" scope="row">{ index + 1 }</th>
-            <td className="col-4">{ formatAddress(address) }</td>
-            <td className="col-3 text-end">
+            <td className="col-5">{ formatAddress(address) }</td>
+            <td className="col-2 text-end">
                 <RevealValue<number, BigNumber> 
                     address={ address } 
                     method={ contract?.getStakeholderShares }

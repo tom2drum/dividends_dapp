@@ -1,6 +1,7 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { Contract, providers } from 'ethers';
+import { providers } from 'ethers';
 import React from 'react';
+import { Dividends } from '../../typechain/Dividends';
 
 import useContract from './hooks/useContract';
 
@@ -15,7 +16,7 @@ interface AppState {
 }
 
 export type AppContextType = AppState & {
-    contract: Contract | null;
+    contract: Dividends | null;
     provider: providers.Web3Provider | null;
     updateStakeholder: (payload: Stakeholder) => void;
     setStakeholders: (payload: Array<Stakeholder>) => void;

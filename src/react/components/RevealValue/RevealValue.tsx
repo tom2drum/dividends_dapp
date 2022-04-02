@@ -11,7 +11,7 @@ import styles from './RevealValue.module.css';
 interface Props<Value, Response> {
     value?: Value;
     address: string;
-    method: () => Promise<Response>;
+    method?: () => Promise<Response>;
     onSuccess: (value: Response) => void;
     children: React.ReactNode;
 }
@@ -25,11 +25,16 @@ const RevealValue = <Value extends any, Response extends any>({ value, method, a
         setLoadingState(true);
 
         try {
-            const transaction = method();
-            const [ shares ] = await Promise.all([ transaction, sleep(500) ]);
+            if(method) {
+                const transaction = method();
+                const [ shares ] = await Promise.all([ transaction, sleep(500) ]);
+    
+                setLoadingState(false);
+                onSuccess(shares);
+                return;
+            }
 
-            setLoadingState(false);
-            onSuccess(shares);
+            throw new Error('Contract method is not provided');
         } catch (error: any) {
             openNotification({ status: 'error', text: error?.data?.message || error.message });
         }
