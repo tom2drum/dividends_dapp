@@ -8,7 +8,7 @@ import useContract from './hooks/useContract';
 interface Stakeholder {
     address: string;
     shares?: number;
-    unclaimed?: number;
+    unclaimed?: string;
 }
 
 interface AppState {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'reactstrap';
 // eslint-disable-next-line node/no-unpublished-import
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 
 import RevealValue from '../RevealValue/RevealValue';
 import { useAppContext } from '../../context';
@@ -13,7 +13,7 @@ import styles from './StakeholdersItem.module.css';
 interface Props {
     address: string;
     shares?: number;
-    unclaimed?: number;
+    unclaimed?: string;
     index: number;
 }
 
@@ -25,7 +25,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
     }, [ updateStakeholder, address ]);
 
     const handleUnclaimedRevealSuccess = React.useCallback((unclaimed: BigNumber) => {
-        updateStakeholder({ address, unclaimed: unclaimed.toNumber() });
+        updateStakeholder({ address, unclaimed: utils.formatEther(unclaimed) });
     }, [ updateStakeholder, address ]);
 
     return (
@@ -43,7 +43,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
                 </RevealValue>
             </td>
             <td className="col-2 text-end">
-                <RevealValue<number, BigNumber>
+                <RevealValue<string, BigNumber>
                     address={ address }
                     method={ contract?.getAmountToClaim }
                     value={ unclaimed }

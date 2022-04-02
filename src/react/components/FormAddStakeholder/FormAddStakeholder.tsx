@@ -35,7 +35,7 @@ const FormAddStakeholder = () => {
                 try {
                     const address = accountElement.value;
                     const shares = Number(sharesElement.value);
-                    const transaction = await contract?.registerShares(accountElement.value, Number(sharesElement.value));
+                    const transaction = await contract?.registerShares(address, shares);
                     const result = await transaction?.wait();
                     
                     if(result?.status === 0) {
@@ -44,12 +44,10 @@ const FormAddStakeholder = () => {
                     updateStakeholder({
                         address,
                         shares,
-                        unclaimed: 0,
                     });
                     openNotification({ status: 'success', text: 'Successfully changed shares' });
                 } catch (error: any) {
                     openNotification({ status: 'error', text: error?.data?.message || error.message });
-                    console.error(error);
                 }
             }
         }

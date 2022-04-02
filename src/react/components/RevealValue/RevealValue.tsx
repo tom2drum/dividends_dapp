@@ -36,7 +36,8 @@ const RevealValue = <Value extends any, Response extends any>({ value, method, a
 
             throw new Error('Contract method is not provided');
         } catch (error: any) {
-            openNotification({ status: 'error', text: error?.data?.message || error.message });
+            setLoadingState(false);
+            openNotification({ status: 'error', text: error.error?.data?.message || error.message });
         }
     }, [ openNotification, method, onSuccess ]);
 
