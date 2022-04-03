@@ -13,7 +13,7 @@ const Notification = () => {
         if(isOpen) {
             timeoutId = window.setTimeout(() => {
                 close();
-            }, 10_000);
+            }, 5_000);
         }
 
         return () => {

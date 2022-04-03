@@ -17,7 +17,7 @@ const ACCOUNTS = [
 
 const FormAddStakeholder = () => {
 
-    const { updateStakeholder, contract } = useAppContext();
+    const { updateStakeholder, updateSoldShares, contract } = useAppContext();
     const { open: openNotification } = useNotification();
 
     const handleSelectChange = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -38,20 +38,19 @@ const FormAddStakeholder = () => {
                     const transaction = await contract?.registerShares(address, shares);
                     const result = await transaction?.wait();
                     
-                    if(result?.status === 0) {
-                        throw new Error('Transaction was reverted');
-                    }
-                    updateStakeholder({
-                        address,
-                        shares,
-                    });
+                    if (result?.status === 0) throw new Error('Transaction was reverted');
+
+                    updateStakeholder({ address, shares });
                     openNotification({ status: 'success', text: 'Successfully changed shares' });
+
+                    const soldShares = await contract?.getSoldShares();
+                    if (soldShares) updateSoldShares(soldShares);
                 } catch (error: any) {
                     openNotification({ status: 'error', text: error?.data?.message || error.message });
                 }
             }
         }
-    }, [ updateStakeholder, contract, openNotification ]) ;
+    }, [ updateStakeholder, updateSoldShares, contract, openNotification ]) ;
 
     return (
         <section>

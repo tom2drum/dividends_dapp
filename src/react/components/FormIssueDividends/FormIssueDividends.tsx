@@ -1,6 +1,6 @@
 import React from 'react';
 // eslint-disable-next-line node/no-unpublished-import
-import { ethers } from 'ethers';
+import { ethers, utils } from 'ethers';
 import { Input, Form, Button, InputGroup, InputGroupText } from 'reactstrap';
 
 import { useAppContext } from '../../contexts/app';
@@ -13,7 +13,7 @@ interface Props {
 
 const FormIssueDividends = ({ className }: Props) => {
 
-    const { provider } = useAppContext();
+    const { provider, contract, updateTotalBalance } = useAppContext();
     const { open: openNotification } = useNotification();
 
     const handleSubmit = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -38,12 +38,15 @@ const FormIssueDividends = ({ className }: Props) => {
                     }
 
                     openNotification({ status: 'success', text: 'Dividends issued' });
+
+                    const balance = await contract?.getTotalBalance();
+                    if (balance) updateTotalBalance(utils.formatEther(balance));
                 } catch (error: any) {
                     openNotification({ status: 'error', text: error?.data?.message || error.message });
                 }
             }
         }
-    }, [ provider, openNotification ]);
+    }, [ provider, contract, openNotification, updateTotalBalance ]);
 
     return (
         <section className={ className }>
