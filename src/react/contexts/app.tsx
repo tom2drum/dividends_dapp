@@ -13,6 +13,8 @@ interface Stakeholder {
 
 interface AppState {
     stakeholders: Array<Stakeholder>;
+    soldShares?: number;
+    totalBalance?: string;
 }
 
 export type AppContextType = AppState & {
@@ -20,6 +22,8 @@ export type AppContextType = AppState & {
     provider: providers.Web3Provider | null;
     updateStakeholder: (payload: Stakeholder) => void;
     setStakeholders: (payload: Array<Stakeholder>) => void;
+    updateSoldShares: (payload: number) => void;
+    updateTotalBalance: (payload: string) => void;
 }
 
 interface ActionSetStakeholder {
@@ -32,7 +36,17 @@ interface ActionUpdateStakeholder {
     payload: Stakeholder;
 }
 
-type Action = ActionUpdateStakeholder | ActionSetStakeholder;
+interface ActionUpdateSoldShares {
+    type: 'UPDATE_SOLD_SHARES';
+    payload: number;
+}
+
+interface ActionUpdateTotalBalance {
+    type: 'UPDATE_TOTAL_BALANCE';
+    payload: string;
+}
+
+type Action = ActionUpdateStakeholder | ActionSetStakeholder | ActionUpdateSoldShares | ActionUpdateTotalBalance;
 
 function contextReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -59,6 +73,14 @@ function contextReducer(state: AppState, action: Action): AppState {
             return { ...state, stakeholders: action.payload };
         }
 
+        case 'UPDATE_SOLD_SHARES': {
+            return { ...state, soldShares: action.payload };
+        }
+
+        case 'UPDATE_TOTAL_BALANCE': {
+            return { ...state, totalBalance: action.payload };
+        }
+
         default:
             return state;
     }
@@ -69,7 +91,7 @@ const initialState: AppState = {
 };
 
 function useContextValue(): AppContextType {
-    const [ { stakeholders }, dispatch ] = React.useReducer(contextReducer, initialState);
+    const [ { stakeholders, soldShares, totalBalance }, dispatch ] = React.useReducer(contextReducer, initialState);
     const { contract, provider } = useContract();
 
     const setStakeholders = React.useCallback((payload: Array<Stakeholder>) => {
@@ -80,15 +102,27 @@ function useContextValue(): AppContextType {
         dispatch({ type: 'UPDATE_STAKEHOLDER', payload });
     }, []);
 
+    const updateSoldShares = React.useCallback((payload: number) => {
+        dispatch({ type: 'UPDATE_SOLD_SHARES', payload });
+    }, []);
+
+    const updateTotalBalance = React.useCallback((payload: string) => {
+        dispatch({ type: 'UPDATE_TOTAL_BALANCE', payload });
+    }, []);
+
     return React.useMemo(() => {
         return {
             stakeholders,
+            soldShares,
+            totalBalance,
             contract,
             provider,
             setStakeholders,
             updateStakeholder,
+            updateSoldShares,
+            updateTotalBalance,
         };
-    }, [ stakeholders, updateStakeholder, setStakeholders, contract, provider ]);
+    }, [ stakeholders, updateStakeholder, setStakeholders, contract, provider, soldShares, updateSoldShares, totalBalance, updateTotalBalance ]);
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);

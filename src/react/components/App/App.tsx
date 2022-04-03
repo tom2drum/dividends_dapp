@@ -2,6 +2,7 @@ import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
 
 import Header from '../Header/Header';
+import MainInfo from '../MainInfo/MainInfo';
 import FormAddStakeholder from '../FormAddStakeholder/FormAddStakeholder';
 import StakeholdersList from '../StakeholdersList/StakeholdersList';
 import FormIssueDividends from '../FormIssueDividends/FormIssueDividends';
@@ -28,6 +29,9 @@ function App() {
             <Container>
                 <Row>
                     <h1 className={ `h1 ${ styles.header }` }>Dividends dApp</h1>
+                    <Col xs="5">
+                        <MainInfo/>
+                    </Col>
                 </Row>
                 <Row>
                     <Col xs="4">

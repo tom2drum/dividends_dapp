@@ -8,8 +8,6 @@ import { useAppContext } from '../../contexts/app';
 import formatAddress from '../../utils/formatAddress';
 import { MAX_SHARES_NUM } from '../../../consts';
 
-import styles from './StakeholdersItem.module.css';
-
 interface Props {
     address: string;
     shares?: number;
@@ -29,7 +27,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
     }, [ updateStakeholder, address ]);
 
     return (
-        <tr className={ styles.root }>
+        <tr className="align-middle">
             <th className="col-1" scope="row">{ index + 1 }</th>
             <td className="col-5">{ formatAddress(address) }</td>
             <td className="col-2 text-end">

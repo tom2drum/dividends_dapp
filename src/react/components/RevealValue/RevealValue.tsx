@@ -11,7 +11,7 @@ import styles from './RevealValue.module.css';
 
 interface Props<Value, Response> {
     value?: Value;
-    address: string;
+    address?: string;
     method?: () => Promise<Response>;
     onSuccess: (value: Response) => void;
     children: React.ReactNode;
@@ -31,12 +31,14 @@ const RevealValue = <Value extends any, Response extends any>({ value, method, a
                 throw new Error('Contract method is not provided');
             }
 
-            const signer = provider?.getSigner();
-            const sigherAddress = await signer?.getAddress();
-
-            if(sigherAddress !== address) {
-                await sleep(500);
-                throw new Error('Unauthorized request');
+            if(address) {
+                const signer = provider?.getSigner();
+                const sigherAddress = await signer?.getAddress();
+    
+                if(sigherAddress !== address) {
+                    await sleep(500);
+                    throw new Error('Unauthorized request');
+                }
             }
 
             const transaction = method();
