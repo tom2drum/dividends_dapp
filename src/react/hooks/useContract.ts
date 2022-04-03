@@ -1,5 +1,4 @@
 import React from 'react';
-// eslint-disable-next-line node/no-unpublished-import
 import { ethers } from 'ethers';
 import DividendsContract from '../../artifacts/contracts/Dividends.sol/Dividends.json';
 import { Dividends } from '../../../typechain/Dividends';

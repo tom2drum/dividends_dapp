@@ -1,5 +1,4 @@
 import React from 'react';
-// eslint-disable-next-line node/no-unpublished-import
 import { ethers, utils } from 'ethers';
 import { Input, Form, Button, InputGroup, InputGroupText } from 'reactstrap';
 

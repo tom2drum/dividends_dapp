@@ -1,6 +1,5 @@
 import React from 'react';
 import { Table } from 'reactstrap';
-// eslint-disable-next-line node/no-unpublished-import
 import { BigNumber, utils } from 'ethers';
 
 import { MAX_SHARES_NUM } from '../../../consts';

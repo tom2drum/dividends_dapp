@@ -1,5 +1,4 @@
 import React from 'react';
-// eslint-disable-next-line node/no-unpublished-import
 import { BigNumber, utils } from 'ethers';
 
 import RevealValue from '../RevealValue/RevealValue';

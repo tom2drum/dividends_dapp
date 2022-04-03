@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from 'reactstrap';
-// eslint-disable-next-line node/no-unpublished-import
 import { utils } from 'ethers';
 
 import { useAppContext } from '../../contexts/app';

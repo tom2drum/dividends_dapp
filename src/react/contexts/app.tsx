@@ -1,4 +1,3 @@
-// eslint-disable-next-line node/no-unpublished-import
 import { providers } from 'ethers';
 import React from 'react';
 import { Dividends } from '../../../typechain/Dividends';
