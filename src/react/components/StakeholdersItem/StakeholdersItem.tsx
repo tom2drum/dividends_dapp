@@ -4,7 +4,7 @@ import { Button } from 'reactstrap';
 import { BigNumber, utils } from 'ethers';
 
 import RevealValue from '../RevealValue/RevealValue';
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 import formatAddress from '../../utils/formatAddress';
 import { MAX_SHARES_NUM } from '../../../consts';
 

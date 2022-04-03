@@ -6,7 +6,7 @@ import FormAddStakeholder from '../FormAddStakeholder/FormAddStakeholder';
 import StakeholdersList from '../StakeholdersList/StakeholdersList';
 import FormIssueDividends from '../FormIssueDividends/FormIssueDividends';
 import Notification from '../Notification/Notification';
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 
 import styles from './App.module.css';
 

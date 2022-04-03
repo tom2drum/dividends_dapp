@@ -1,7 +1,7 @@
 import React from 'react';
 import { Col, Input, Form, FormGroup, Label, Button, InputGroup, InputGroupText } from 'reactstrap';
 
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 import { useNotification } from '../../contexts/notification';
 import formatAddress from '../../utils/formatAddress';
 import { MAX_SHARES_NUM } from '../../../consts';

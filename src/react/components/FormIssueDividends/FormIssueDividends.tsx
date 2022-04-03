@@ -3,7 +3,7 @@ import React from 'react';
 import { ethers } from 'ethers';
 import { Input, Form, Button, InputGroup, InputGroupText } from 'reactstrap';
 
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 import { useNotification } from '../../contexts/notification';
 import { CONTRACT_ADDRESS } from '../../../consts';
 

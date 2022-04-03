@@ -1,9 +1,9 @@
 // eslint-disable-next-line node/no-unpublished-import
 import { providers } from 'ethers';
 import React from 'react';
-import { Dividends } from '../../typechain/Dividends';
+import { Dividends } from '../../../typechain/Dividends';
 
-import useContract from './hooks/useContract';
+import useContract from '../hooks/useContract';
 
 interface Stakeholder {
     address: string;

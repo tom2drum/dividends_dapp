@@ -1,7 +1,7 @@
 import React from 'react';
 import { Spinner } from 'reactstrap';
 
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 import { useNotification } from '../../contexts/notification';
 import sleep from '../../utils/sleep';
 import genericMemo from '../../utils/genericMemo';

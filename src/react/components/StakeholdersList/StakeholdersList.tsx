@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table } from 'reactstrap';
 
-import { useAppContext } from '../../context';
+import { useAppContext } from '../../contexts/app';
 import StakeholdersItem from '../StakeholdersItem/StakeholdersItem';
 
 const StakeholdersList = () => {
