@@ -4,7 +4,6 @@ import { Input, Form, Button, InputGroup, InputGroupText } from 'reactstrap';
 
 import { useAppContext } from '../../contexts/app';
 import { useNotification } from '../../contexts/notification';
-import { CONTRACT_ADDRESS } from '../../../consts';
 
 interface Props {
     className: string
@@ -27,7 +26,7 @@ const FormIssueDividends = ({ className }: Props) => {
                     const dividends = dividendsElement.value;
                     const signer = provider?.getSigner();
                     const transaction = await signer?.sendTransaction({
-                        to: CONTRACT_ADDRESS,
+                        to: process.env.REACT_APP_CONTRACT_ADDRESS,
                         value: ethers.utils.parseEther(dividends),
                     });
                     const result = await transaction?.wait();
