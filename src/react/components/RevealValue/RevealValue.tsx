@@ -1,6 +1,7 @@
 import React from 'react';
 import { Spinner } from 'reactstrap';
 
+import { useAppContext } from '../../context';
 import { useNotification } from '../../contexts/notification';
 import sleep from '../../utils/sleep';
 import genericMemo from '../../utils/genericMemo';
@@ -19,27 +20,35 @@ interface Props<Value, Response> {
 const RevealValue = <Value extends any, Response extends any>({ value, method, address, onSuccess, children }: Props<Value, Response>) => {
 
     const { open: openNotification } = useNotification();
+    const { provider } = useAppContext();
     const [ isLoading, setLoadingState ] = React.useState(false);
 
     const handleRevealClick = React.useCallback(async() => {
         setLoadingState(true);
 
         try {
-            if(method) {
-                const transaction = method();
-                const [ shares ] = await Promise.all([ transaction, sleep(500) ]);
-    
-                setLoadingState(false);
-                onSuccess(shares);
-                return;
+            if(!method) {
+                throw new Error('Contract method is not provided');
             }
 
-            throw new Error('Contract method is not provided');
+            const signer = provider?.getSigner();
+            const sigherAddress = await signer?.getAddress();
+
+            if(sigherAddress !== address) {
+                await sleep(500);
+                throw new Error('Unauthorized request');
+            }
+
+            const transaction = method();
+            const [ shares ] = await Promise.all([ transaction, sleep(500) ]);
+
+            onSuccess(shares);
         } catch (error: any) {
-            setLoadingState(false);
             openNotification({ status: 'error', text: error.error?.data?.message || error.message });
+        } finally {
+            setLoadingState(false);
         }
-    }, [ openNotification, method, onSuccess ]);
+    }, [ openNotification, method, onSuccess, provider, address ]);
 
     let content;
     if(isLoading) {
