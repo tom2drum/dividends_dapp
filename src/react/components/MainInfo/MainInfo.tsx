@@ -10,15 +10,24 @@ import RevealValue from '../RevealValue/RevealValue';
 import styles from './MainInfo.module.css';
 
 const MainInfo = () => {
-    const { contract, soldShares, updateSoldShares, totalBalance, updateTotalBalance } = useAppContext();
+    const { 
+        contract, 
+        soldShares, updateSoldShares, 
+        balance, updateBalance,
+        payed, updatePayedAmount,
+    } = useAppContext();
 
     const handleTotalSharesRevealSuccess = React.useCallback((shares: number) => {
         updateSoldShares(shares);
     }, [ updateSoldShares ]);
 
-    const handleTotalBalanceRevealSuccess = React.useCallback((balance: BigNumber) => {
-        updateTotalBalance(utils.formatEther(balance));
-    }, [ updateTotalBalance ]);
+    const handleBalanceRevealSuccess = React.useCallback((balance: BigNumber) => {
+        updateBalance(utils.formatEther(balance));
+    }, [ updateBalance ]);
+
+    const handlePayedRevealSuccess = React.useCallback((balance: BigNumber) => {
+        updatePayedAmount(utils.formatEther(balance));
+    }, [ updatePayedAmount ]);
 
     return (
         <Table className={ styles.root }>
@@ -26,6 +35,7 @@ const MainInfo = () => {
                 <tr>
                     <th className="col-2">Total sold shares</th>
                     <th className="col-2">Total balance</th>
+                    <th className="col-2">Total payed</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,10 +52,19 @@ const MainInfo = () => {
                     <td className="col-2">
                         <RevealValue<string, BigNumber>
                             method={ contract?.getTotalBalance }
-                            value={ totalBalance }
-                            onSuccess={ handleTotalBalanceRevealSuccess }
+                            value={ balance }
+                            onSuccess={ handleBalanceRevealSuccess }
                         >
-                            { totalBalance } ETH
+                            { balance } ETH
+                        </RevealValue>
+                    </td>
+                    <td className="col-2">
+                        <RevealValue<string, BigNumber>
+                            method={ contract?.getPayedTotal }
+                            value={ payed }
+                            onSuccess={ handlePayedRevealSuccess }
+                        >
+                            { payed } ETH
                         </RevealValue>
                     </td>
                 </tr>
