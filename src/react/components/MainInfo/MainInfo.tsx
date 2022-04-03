@@ -25,8 +25,8 @@ const MainInfo = () => {
         updateBalance(utils.formatEther(balance));
     }, [ updateBalance ]);
 
-    const handlePayedRevealSuccess = React.useCallback((balance: BigNumber) => {
-        updatePayedAmount(utils.formatEther(balance));
+    const handlePayedRevealSuccess = React.useCallback((payed: BigNumber) => {
+        updatePayedAmount(utils.formatEther(payed));
     }, [ updatePayedAmount ]);
 
     return (

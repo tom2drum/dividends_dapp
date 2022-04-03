@@ -26,6 +26,7 @@ export type AppContextType = AppState & {
     updateSoldShares: (payload: number) => void;
     updateBalance: (payload: string) => void;
     updatePayedAmount: (payload: string) => void;
+    issueDividends: () => void;
 }
 
 interface ActionSetStakeholder {
@@ -53,7 +54,12 @@ interface ActionUpdatePayedAmount {
     payload: string;
 }
 
-type Action = ActionUpdateStakeholder | ActionSetStakeholder | ActionUpdateSoldShares | ActionUpdateBalance | ActionUpdatePayedAmount;
+interface ActionIssueDividends {
+    type: 'ISSUE_DIVIDENDS';
+}
+
+type Action = ActionUpdateStakeholder | ActionSetStakeholder | ActionUpdateSoldShares | ActionUpdateBalance | ActionUpdatePayedAmount
+| ActionIssueDividends;
 
 function contextReducer(state: AppState, action: Action): AppState {
     switch (action.type) {
@@ -92,6 +98,11 @@ function contextReducer(state: AppState, action: Action): AppState {
             return { ...state, payed: action.payload };
         }
 
+        case 'ISSUE_DIVIDENDS': {
+            const stakeholders = state.stakeholders.map((stakeholder) => ({ ...stakeholder, unclaimed: undefined }));
+            return { ...state, stakeholders };
+        }
+
         default:
             return state;
     }
@@ -125,6 +136,10 @@ function useContextValue(): AppContextType {
         dispatch({ type: 'UPDATE_PAYED_AMOUNT', payload });
     }, []);
 
+    const issueDividends = React.useCallback(() => {
+        dispatch({ type: 'ISSUE_DIVIDENDS' });
+    }, []);
+
     return React.useMemo(() => {
         return {
             stakeholders,
@@ -138,10 +153,11 @@ function useContextValue(): AppContextType {
             updateSoldShares,
             updateBalance,
             updatePayedAmount,
+            issueDividends,
         };
     }, [ 
         stakeholders, updateStakeholder, setStakeholders, contract, provider, soldShares, updateSoldShares, balance, updateBalance,
-        payed, updatePayedAmount,
+        payed, updatePayedAmount, issueDividends,
     ]);
 }
 

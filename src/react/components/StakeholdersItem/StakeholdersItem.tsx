@@ -1,9 +1,9 @@
 import React from 'react';
-import { Button } from 'reactstrap';
 // eslint-disable-next-line node/no-unpublished-import
 import { BigNumber, utils } from 'ethers';
 
 import RevealValue from '../RevealValue/RevealValue';
+import ClaimButton from '../ClaimButton/ClaimButton';
 import { useAppContext } from '../../contexts/app';
 import formatAddress from '../../utils/formatAddress';
 import { MAX_SHARES_NUM } from '../../../consts';
@@ -50,8 +50,8 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
                     { unclaimed } ETH
                 </RevealValue>
             </td>
-            <td className="col-2">
-                <Button color="info" size="sm" outline>Claim</Button>
+            <td className="col-2 text-end">
+                <ClaimButton unclaimed={ unclaimed } address={ address }/>
             </td>
         </tr>
     );

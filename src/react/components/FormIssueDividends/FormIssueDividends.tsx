@@ -13,7 +13,7 @@ interface Props {
 
 const FormIssueDividends = ({ className }: Props) => {
 
-    const { provider, contract, updateBalance } = useAppContext();
+    const { provider, contract, updateBalance, issueDividends } = useAppContext();
     const { open: openNotification } = useNotification();
 
     const handleSubmit = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -38,6 +38,7 @@ const FormIssueDividends = ({ className }: Props) => {
                     }
 
                     openNotification({ status: 'success', text: 'Dividends issued' });
+                    issueDividends();
 
                     const balance = await contract?.getTotalBalance();
                     if (balance) updateBalance(utils.formatEther(balance));
@@ -46,7 +47,7 @@ const FormIssueDividends = ({ className }: Props) => {
                 }
             }
         }
-    }, [ provider, contract, openNotification, updateBalance ]);
+    }, [ provider, contract, openNotification, updateBalance, issueDividends ]);
 
     return (
         <section className={ className }>
