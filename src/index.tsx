@@ -7,12 +7,11 @@ import { NotificationContextProvider } from './react/contexts/notification';
 
 ReactDOM.render(
     <React.StrictMode>
-        <AppContextProvider>
-            <NotificationContextProvider>
+        <NotificationContextProvider>
+            <AppContextProvider>
                 <App/>
-            </NotificationContextProvider>
-        </AppContextProvider>
+            </AppContextProvider>
+        </NotificationContextProvider>
     </React.StrictMode>,
-    // eslint-disable-next-line no-undef
     window.document.getElementById('root'),
 );

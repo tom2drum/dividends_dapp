@@ -17,7 +17,7 @@ const StakeholdersList = () => {
                         <th> # </th>
                         <th> Account Number </th>
                         <th> Shares </th>
-                        <th> Unclaimed Amount </th>
+                        <th> Unclaimed </th>
                         <th> Actions </th>
                     </tr>
                 </thead>
