@@ -364,16 +364,31 @@ describe('Dividends', function() {
                 .to.be.revertedWith('InsufficientShareAmount(20, 21)');
         });
 
-        it('will delete stakeholder from list when changing his shares to 0', async() => {
-            const { firstAccount, secondAccount } = await getAccounts();
+        describe('deleting stakeholder', () => {
+            it('will delete stakeholder from list when changing his shares to 0', async() => {
+                const { firstAccount, secondAccount } = await getAccounts();
+    
+                await contractToken.registerShares(firstAccount.address, SHARES.first);
+                await contractToken.registerShares(secondAccount.address, SHARES.second);
+                await contractToken.registerShares(firstAccount.address, 0);
+    
+                await expect(depositDividends(10_000)).to.be.revertedWith('NotEnoughStakeholders(1, 2)');
+                await expect(contractToken.connect(firstAccount)['getStakeholderShares()']()).to.be.revertedWith('UnauthorizedRequest()');
+            });
 
-            await contractToken.registerShares(firstAccount.address, SHARES.first);
-            await contractToken.registerShares(secondAccount.address, SHARES.second);
-            await contractToken.registerShares(firstAccount.address, 0);
+            it('will add unclaimed amount to undistributed dividends', async() => {
+                const { firstAccount, secondAccount } = await getAccounts();
+    
+                await contractToken.registerShares(firstAccount.address, SHARES.first);
+                await contractToken.registerShares(secondAccount.address, SHARES.second);
+                await depositDividends(10_000);
+                await contractToken.registerShares(firstAccount.address, 0);
 
-            await expect(depositDividends(10_000)).to.be.revertedWith('NotEnoughStakeholders(1, 2)');
-            await expect(contractToken.connect(firstAccount)['getStakeholderShares()']()).to.be.revertedWith('UnauthorizedRequest()');
+                const undistributedTotal = await contractToken.getUndistributed();
+                expect(undistributedTotal).to.equal(8_000);
+            });
         });
+
 
         it('should not register a stakeholder with empty share', async() => {
             const { firstAccount } = await getAccounts();

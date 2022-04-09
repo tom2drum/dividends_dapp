@@ -295,7 +295,8 @@ contract Dividends is Ownable {
 	}
 
 	/**
-	* @dev Removes an existing stakeholder from registration list
+	* @dev Removes an existing stakeholder from registration list and transfer his unclaimed dividends
+	* to undistributed pool
 	* @param _address Stakeholder address
 	*/
 	function removeStakeHolderFromList(address _address) private {
@@ -309,6 +310,7 @@ contract Dividends is Ownable {
 		}
 
 		if (indexToRemove < registeredStakeholders.length) {
+			undistributedTotal += stakeholders[_address].unclaimedTotal;
 			registeredStakeholders[indexToRemove] = registeredStakeholders[registeredStakeholders.length - 1];
 			registeredStakeholders.pop();
 		}
