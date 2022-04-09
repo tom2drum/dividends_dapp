@@ -28,14 +28,15 @@
 		"web-vitals": "^2.1.4"
 	},
 	"scripts": {
-		"start": "react-scripts start",
-		"build": "react-scripts build",
-		"test:ui": "react-scripts test",
-		"test:contracts": "./node_modules/.bin/hardhat test",
-		"test:contracts:watch": "./node_modules/.bin/hardhat watch test",
-		"eject": "react-scripts eject",
-		"compile": "./node_modules/.bin/hardhat compile",
-		"code-coverage": "./node_modules/.bin/hardhat coverage"
+		"ui:start": "react-scripts start",
+		"ui:build": "react-scripts build",
+		"ui:test": "react-scripts test",
+		"network:up": "hardhat node",
+		"contract:compile": "hardhat compile",
+		"contract:deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+		"contract:test": "hardhat test",
+		"contract:test:watch": "hardhat watch test",
+		"contract:code-coverage": "hardhat coverage"
 	},
 	"browserslist": {
 		"production": [
