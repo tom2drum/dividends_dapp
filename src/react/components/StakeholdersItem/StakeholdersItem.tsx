@@ -32,7 +32,7 @@ const StakeholdersItem = ({ address, shares, unclaimed, index }: Props) => {
             <td className="col-2 text-end">
                 <RevealValue<number, BigNumber> 
                     address={ address } 
-                    method={ contract?.getStakeholderShares }
+                    method={ contract?.['getStakeholderShares()'] }
                     value={ shares } 
                     onSuccess={ handleSharesRevealSuccess }
                 >

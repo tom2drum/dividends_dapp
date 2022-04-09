@@ -17,10 +17,45 @@ const ACCOUNTS = [
 
 const FormAddStakeholder = () => {
 
-    const { updateStakeholder, updateSoldShares, contract } = useAppContext();
+    const { updateStakeholder, updateSoldShares, contract, stakeholders } = useAppContext();
     const { open: openNotification } = useNotification();
+    const [ shares, setShares ] = React.useState('');
 
-    const handleSelectChange = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
+    const handleSharesChange = React.useCallback((event: React.SyntheticEvent<HTMLInputElement>) => {
+        const value = event.currentTarget.value;
+        const normalizedValue = Number(value);
+        if(!Object.is(normalizedValue, NaN)) {
+            setShares(String(normalizedValue));
+        }
+    }, []);
+
+    const handleStakeholderChange = React.useCallback(async(event: React.SyntheticEvent<HTMLInputElement>) => {
+        const value = event.currentTarget.value;
+        const stakeholder = stakeholders.find(({ address }) => address.toLowerCase() === value.toLowerCase());
+
+        if(!stakeholder) {
+            setShares('');
+            return;
+        }
+
+        if(stakeholder.shares) {
+            setShares(String(stakeholder.shares));
+            return;
+        }
+
+        try {
+            const result = await contract?.['getStakeholderShares(address)'](stakeholder.address);
+            if(result) {
+                updateStakeholder({ address: stakeholder.address, shares: result.toNumber() });
+                setShares(String(result.toNumber()));
+            }
+        } catch (error) {
+            setShares('');
+        }
+
+    }, [ stakeholders, contract, updateStakeholder ]);
+
+    const handleFormSubmit = React.useCallback(async(event: React.SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const isValid = form.checkValidity();
@@ -40,6 +75,7 @@ const FormAddStakeholder = () => {
                     
                     if (result?.status === 0) throw new Error('Transaction was reverted');
 
+                    console.log('__>__', address, shares);
                     updateStakeholder({ address, shares });
                     openNotification({ status: 'success', text: 'Successfully changed shares' });
 
@@ -55,7 +91,7 @@ const FormAddStakeholder = () => {
     return (
         <section>
             <h2 className="h4 mb-4">Add or edit stakeholder</h2>
-            <Form onSubmit={ handleSelectChange }>
+            <Form onSubmit={ handleFormSubmit }>
                 <FormGroup row>
                     <Label for="account" xs="4">
                         Account number
@@ -66,6 +102,7 @@ const FormAddStakeholder = () => {
                             type="select"
                             placeholder="Select account"
                             required
+                            onChange={ handleStakeholderChange }
                         >
                             { ACCOUNTS.map((account) => (
                                 <option key={ account } value={ account }>
@@ -88,6 +125,8 @@ const FormAddStakeholder = () => {
                                 min={ 0 }
                                 max={ 1_000 }
                                 required
+                                value={ shares }
+                                onChange={ handleSharesChange }
                             />
                             <InputGroupText>
                                 / { MAX_SHARES_NUM.toLocaleString('ru') }

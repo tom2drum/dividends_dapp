@@ -100,6 +100,10 @@ contract Dividends is Ownable {
 		return stakeholders[_msgSender()].shares;
 	}
 
+	function getStakeholderShares(address _address) external view onlyOwner returns (uint256) {
+		return stakeholders[_address].shares;
+	}
+
 	function getAmountToClaim() external view returns (uint256) {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 		if(stakeholder.shares == 0) {

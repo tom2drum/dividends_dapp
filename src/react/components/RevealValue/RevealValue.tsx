@@ -42,9 +42,9 @@ const RevealValue = <Value extends any, Response extends any>({ value, method, a
             }
 
             const transaction = method();
-            const [ shares ] = await Promise.all([ transaction, sleep(500) ]);
+            const [ result ] = await Promise.all([ transaction, sleep(500) ]);
 
-            onSuccess(shares);
+            onSuccess(result);
         } catch (error: any) {
             openNotification({ status: 'error', text: error.error?.data?.message || error.message });
         } finally {
