@@ -5,18 +5,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 // import "hardhat/console.sol";
 
-/// @title Dividends distribution contract
-/// @author Tom Goriunov
-/** @notice
+/** @title Dividends distribution contract
+*	@author Tom Goriunov
+*	@notice
 *	This contract allows to distribute a company's earnings among registered stakeholders. 
 *
 * 	The owner which is also being the source of the income deploys the contract with appropriate amount of shares
-* 	to sell. Once done, he can register stakeholders and transfer money directly to the contract address that will 
-*	be used as dividends. 
+* 	to sell. Once done, he can register stakeholders and transfer money directly to the contract address for later
+*	usage as dividends. 
 *
 *	The dividends can be claimed by stakeholders upon request basis (pull payment model). This means that all payments 
 *	will be not automatically forwarded to all eligible parties when new dividends are issued. Instead the actual transfer
-*	of the money should be manually triggered by every stakeholder account by calling the `claim` method.
+*	of the money should be manually triggered for every stakeholder account by calling the `claim` method.
 *
 *	During the lifetime of the contract the owner is able to change the shares allocation between stakeholders or 
 *	add a new one even when some dividends were deposited and partly claimed. 
@@ -49,11 +49,11 @@ contract Dividends is Ownable {
 	uint8 private immutable stakeholdersLimit;
 	address[] private registeredStakeholders; /// @dev Array of registered stakeholders addresses.
 
-	event StakeholderRegistered(address indexed _address, uint256 _share);
-	event StakeholdersShareChanged(address indexed _address, uint256 _share);
-	event DividendsIssued(uint256 amount);
-	event DividendsReleased(address indexed recipient, uint256 amount);
-	event DividendsWithdrawn(uint256 amount);
+	event StakeholderRegistered(address indexed _address, uint _share);
+	event StakeholdersShareChanged(address indexed _address, uint _share);
+	event DividendsIssued(uint amount);
+	event DividendsReleased(address indexed recipient, uint amount);
+	event DividendsWithdrawn(uint amount);
 
 	error UnauthorizedRequest();
 	error InsufficientFunds(uint available, uint requested);
@@ -62,7 +62,9 @@ contract Dividends is Ownable {
 	error StakeholdersLimitReached(uint8 limit);
 
 	/**
-	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders.
+	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders. The
+	* amount of stakeholders are limited because of unclaimed dividends distribution process while shares allocation is changing
+	* and 'run-out-of-gas' concerns.
 	* @param _totalShares Total amount of shares that can be sold.
 	* @param _stakeholdersLimit Total amount of stakeholders that can be registered.
 	*/
@@ -75,7 +77,7 @@ contract Dividends is Ownable {
 	}
 
 	/**
-    * @dev The contract should be able to receive Eth, but only if there is enough eligible stakeholders.
+    * @dev The contract is able to receive ETH, but only if there is enough eligible stakeholders.
 	* The received amount will be logged with { DividendsIssued } event.
     */
 	receive() external payable virtual onlyOwner {
@@ -92,19 +94,29 @@ contract Dividends is Ownable {
 	/**
     * @dev Getter for current amount of stakeholder's shares. Note that it will throw an error for
 	* unauthorized request.
+	* @return uint Stakeholder's share amount
     */
-	function getStakeholderShares() external view returns (uint256) {
+	function getStakeholderShares() external view returns (uint) {
 		if(stakeholders[_msgSender()].shares == 0) {
 			revert UnauthorizedRequest();
 		}
 		return stakeholders[_msgSender()].shares;
 	}
 
-	function getStakeholderShares(address _address) external view onlyOwner returns (uint256) {
+	/**
+    * @dev Getter for current share amount for provided address. Note that it can be used only by
+	* the contract owner
+	* @return uint Stakeholder's share amount
+    */
+	function getStakeholderShares(address _address) external view onlyOwner returns (uint) {
 		return stakeholders[_address].shares;
 	}
 
-	function getAmountToClaim() external view returns (uint256) {
+	/**
+    * @dev Getter for overall amount that the sender can claim from the contract
+	* @return uint Total amount to claim
+    */
+	function getAmountToClaim() external view returns (uint) {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 		if(stakeholder.shares == 0) {
 			revert UnauthorizedRequest();
@@ -115,6 +127,7 @@ contract Dividends is Ownable {
 
 	/**
     * @dev Getter for total amount of sold shares.
+	* @return unit16 Total realized shares
     */
 	function getSoldShares() public view returns (uint16) {
 		return soldShares;
@@ -122,6 +135,7 @@ contract Dividends is Ownable {
 
 	/**
     * @dev Getter for total amount of shares.
+	* @return unit16 Total issued shares
     */
 	function getTotalShares() public view returns (uint16) {
 		return totalShares;
@@ -130,26 +144,46 @@ contract Dividends is Ownable {
 	/**
     * @dev Retrieves the balance of the contract. Note that the balance is always
 	* consists of the amount of unclaimed and undistributed dividends.
+	* @return unit Current balance
     */
-	function getTotalBalance() public view returns (uint256) {
+	function getTotalBalance() public view returns (uint) {
 		return address(this).balance;
 	}
 
 	/**
     * @dev Getter for total amount of undistributed dividends.
+	* @return unit Undistributed dividends
     */
-	function getUndistributed() external view returns (uint256) {
+	function getUndistributed() external view returns (uint) {
 		return undistributedTotal;
 	}
 
+	/**
+    * @dev Getter for list of current stakeholder's addresses
+	* @return address[] List of registered stakeholders
+    */
 	function getStakeholders() external view returns (address[] memory) {
 		return registeredStakeholders;
 	}
 
-	function getPayedTotal() external view returns (uint256) {
+	/**
+    * @dev Getter for overall amount of ETH payed to stakeholders
+	* @return uint Total payed amount
+    */
+	function getPayedTotal() external view returns (uint) {
 		return payedTotal;
 	}
 
+	/**
+    * @dev Initiate process of new shares registration. Note that it can be run only by the contract
+	* owner and on behalf of any other network address. If the provided address has been already registered, 
+	* then its corresponding shares will be overridden with the given amount and the { StakeholdersShareChanged } event
+	* will be logged. If it is not the case, then the new stakeholder will be created and { StakeholderRegistered } event
+	* will be emitted. Note that the owner can delete a stakeholder using this method by providing zero as desirable amount
+	* of shares.
+	* @param _address Stakeholder address
+	* @param _shares New shares amount
+    */
 	function registerShares(address _address, uint16 _shares) external onlyOwner {
 		require(owner() != _address, "Owner cannot be a stakeholder");
 
@@ -178,14 +212,20 @@ contract Dividends is Ownable {
 		}
 	}
 
+	/**
+	* @dev Triggers the transfer to the message sender account of all ETH that the sender haven't claimed yet
+	* during previous dividends issues. The amount is calculated according to the percentage of the sender's shares
+	* in each share allocation step and his previous withdrawals. { DividendsReleased } event is logged as a result of
+	* the method call
+	*/
 	function claim() external {
 		Stakeholder memory stakeholder = stakeholders[_msgSender()];
 		if(stakeholder.shares == 0) {
 			revert UnauthorizedRequest();
 		}
 
-		uint256 amountToPay = getAmountToPay(stakeholder);
-		uint256 balance = getTotalBalance();
+		uint amountToPay = getAmountToPay(stakeholder);
+		uint balance = getTotalBalance();
 
 		require(amountToPay > 0, "No dividends to pay");
 		if(amountToPay > balance) {
@@ -203,6 +243,9 @@ contract Dividends is Ownable {
 		emit DividendsReleased(_msgSender(), amountToPay);
 	}
 
+	/**
+	* @dev Triggers the transfer of all not distributed dividends to the owner's account and emits { DividendsWithdrawn } event
+	*/
 	function withdrawUndistributed() external onlyOwner {
 		require(undistributedTotal > 0, "Nothing to withdraw");
 		assert(getTotalBalance()  >= undistributedTotal);
@@ -215,6 +258,11 @@ contract Dividends is Ownable {
 		undistributedTotal = 0;
 	}
 
+	/**
+	* @dev Adds a new stakeholder to the contract
+	* @param _address Stakeholder address
+	* @param _shares Shares amount
+	*/
 	function addStakeholder(address _address, uint16 _shares) private {
 		Stakeholder memory stakeholder = Stakeholder({ shares: _shares, csaClaimed: 0, unclaimedTotal: 0 });
 
@@ -227,6 +275,11 @@ contract Dividends is Ownable {
 		emit StakeholderRegistered(_address, _shares);
 	}
 
+	/**
+	* @dev Modifies an existing stakeholder's share amount or delete it completely
+	* @param _address Stakeholder address
+	* @param _shares Shares amount
+	*/
 	function changeStakeholderShares(address _address, uint16 _shares) private {
 
 		soldShares = soldShares - stakeholders[_address].shares + _shares;
@@ -241,6 +294,10 @@ contract Dividends is Ownable {
 		emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
 	}
 
+	/**
+	* @dev Removes an existing stakeholder from registration list
+	* @param _address Stakeholder address
+	*/
 	function removeStakeHolderFromList(address _address) private {
 		uint indexToRemove = registeredStakeholders.length;
 
@@ -257,6 +314,11 @@ contract Dividends is Ownable {
 		}
 	}
 
+	/**
+	* @dev Distributes the amount of dividends that has not been claimed by stakeholders in current shares
+	* allocation. Note that it is necessary to remember those amounts when allocation is changing, so the contract
+	* can correctly calculate amounts for every stakeholders in upcoming withdrawals.
+	*/
 	function distributeUnclaimed() private {
 		for (uint index = 0; index < registeredStakeholders.length; index++) {
 			uint unclaimedAmount = getCsaUnclaimedAmount(stakeholders[registeredStakeholders[index]]);
@@ -266,11 +328,18 @@ contract Dividends is Ownable {
 		}
 	}
 
-	function getAmountToPay(Stakeholder memory stakeholder) private view returns (uint256) {
+	/**
+	* @dev Calculates overall amount of dividends for the claim
+	*/
+	function getAmountToPay(Stakeholder memory stakeholder) private view returns (uint) {
 		return getCsaUnclaimedAmount(stakeholder) + stakeholder.unclaimedTotal;
 	}
 
-	function getCsaUnclaimedAmount(Stakeholder memory stakeholder) private view returns (uint256) {
+	/**
+	* @dev Calculates amount of dividends that stakeholder is able to claim from the current unclaimed pool
+	* according to his shares and previously claimed amount in present shares allocation.
+	*/
+	function getCsaUnclaimedAmount(Stakeholder memory stakeholder) private view returns (uint) {
 		if (csaTotal == 0) {
 			return 0;
 		}
