@@ -1,48 +1,31 @@
 [![Test contracts](https://github.com/1n1t/shares/actions/workflows/contract-tests.yml/badge.svg?branch=master)](https://github.com/1n1t/shares/actions/workflows/contract-tests.yml)
 
-# Advanced Sample Hardhat Project
+# Dividends distribution contract
 
-This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
+## Description
 
-The project comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts. It also comes with a variety of other tools, preconfigured to work with the project code.
+This contract allows to distribute a company's earnings among registered stakeholders. 
 
-Try running some of the following tasks:
+The owner which is also being the source of the income deploys the contract with appropriate amount of shares to sell. Once done, he can register stakeholders and transfer money directly to the contract address for later
+usage as dividends. 
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-npx hardhat help
-REPORT_GAS=true npx hardhat test
-npx hardhat coverage
-npx hardhat run scripts/deploy.ts
-TS_NODE_FILES=true npx ts-node scripts/deploy.ts
-npx eslint '**/*.{js,ts}'
-npx eslint '**/*.{js,ts}' --fix
-npx prettier '**/*.{json,sol,md}' --check
-npx prettier '**/*.{json,sol,md}' --write
-npx solhint 'contracts/**/*.sol'
-npx solhint 'contracts/**/*.sol' --fix
-```
+The dividends can be claimed by stakeholders upon request basis (pull payment model). This means that all payments will be not automatically forwarded to all eligible parties when new dividends are issued. Instead the actual transfer of the money should be manually triggered for every stakeholder account by calling the `claim` method.
 
-# Etherscan verification
+During the lifetime of the contract the owner is able to change the shares allocation between stakeholders or add a new one even when some dividends were deposited and partly claimed. 
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
+The contract also accumulate the part of the dividends that was not distributed among parties due to incomplete shares allocation. The owner can withdraw this amount of money at any given point.
 
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details. Enter your Etherscan API key, your Ropsten node URL (eg from Alchemy), and the private key of the account which will send the deployment transaction. With a valid .env file in place, first deploy your contract:
+## Local development
 
-```shell
-hardhat run --network ropsten scripts/deploy.ts
-```
+Compile the contract: `npm run contract:compile`
+Run the local network: `npm run network:up`
+Deploy contract to the network: `npm run contract:deploy:local`
+Build UI and run local dev server: `npm run ui:start` and navigate to `http://localhost:3000/`
 
-Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
+Make sure that you have Metamask extension installed in your browser. Import several accounts to the extension from the local blockchain network (see the log output when the local node was started). Note that by default the contract is deployed with the `Account #0`, so use it as the owner of the contract when interacting with the app page.
 
-```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
-```
+## Unit tests
 
-# Performance optimizations
-
-For faster runs of your tests and scripts, consider skipping ts-node's type checking by setting the environment variable `TS_NODE_TRANSPILE_ONLY` to `1` in hardhat's environment. For more details see [the documentation](https://hardhat.org/guides/typescript.html#performance-optimizations).
+Run contracts tests: `npm run contract:test`
+Run contracts tests in watch mode: `npm run contract:test:watch`
+Get code coverage report: `npm run contract:code-coverage`
