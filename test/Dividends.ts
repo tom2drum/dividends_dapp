@@ -84,6 +84,9 @@ describe('Dividends', function() {
                     .withArgs(secondAccount.address, 2_000);
 
                 expect(tx).to.changeEtherBalance(secondAccount, 2_000);
+
+                const payedAmount = await contractToken.getPayedTotal();
+                expect(payedAmount).to.be.equal(2_000);
             });
 
             it('will not release dividends if stakeholder has already claimed all available amount', async() => {
@@ -113,8 +116,10 @@ describe('Dividends', function() {
 
                 const tx = await contractToken.connect(secondAccount).claim();
                 expect(tx).to.emit(contractToken, 'DividendsReleased').withArgs(secondAccount.address, 1_000);
-
                 expect(tx).to.changeEtherBalance(secondAccount, 1_000);
+
+                const payedAmount = await contractToken.getPayedTotal();
+                expect(payedAmount).to.be.equal(3_000);
             });
 
             it('send correct amount on the second claim for another address', async() => {
@@ -125,8 +130,10 @@ describe('Dividends', function() {
 
                 const tx = await contractToken.connect(firstAccount).claim();
                 expect(tx).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 12_000);
-
                 expect(tx).to.changeEtherBalance(secondAccount, 12_000);
+
+                const payedAmount = await contractToken.getPayedTotal();
+                expect(payedAmount).to.be.equal(14_000);
             });
 
             it('will empty the pool when all dividends are paid', async() => {
@@ -392,7 +399,9 @@ describe('Dividends', function() {
 
             await expect(contractToken.registerShares(thirdAccount.address, 10)).to.be.revertedWith('InsufficientShareAmount(0, 10)');
         });
+    });
 
+    describe('contract state info', () => {
         it('should not show shares info to unauthorized account', async() => {
             const { firstAccount } = await getAccounts();
 
@@ -402,6 +411,18 @@ describe('Dividends', function() {
 
             const shares = await contractToken.connect(firstAccount)['getStakeholderShares()']();
             expect(shares).to.equal(SHARES.first);
+        });
+
+        it('only owner can see amount of shares for specific stakeholder', async() => {
+            const { firstAccount, secondAccount } = await getAccounts();
+
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+
+            const shares = await contractToken['getStakeholderShares(address)'](firstAccount.address);
+            expect(shares).to.equal(SHARES.first);
+
+            const tx = contractToken.connect(secondAccount)['getStakeholderShares(address)'](firstAccount.address);
+            await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
         });
 
         it('owner cannot register himself as a stakeholder', async() => {
@@ -420,6 +441,19 @@ describe('Dividends', function() {
 
             expect(soldShares).to.equal(SHARES.first);
             expect(totalShares).to.equal(SHARES.first + SHARES.second);
+        });
+
+        it('anyone can see the list of registered stakeholders', async() => {
+            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
+
+            await contractToken.registerShares(firstAccount.address, SHARES.first);
+            await contractToken.registerShares(secondAccount.address, SHARES.second);
+
+            const stakeholders = await contractToken.connect(thirdAccount).getStakeholders();
+
+            expect(stakeholders[0]).to.equal(firstAccount.address);
+            expect(stakeholders[1]).to.equal(secondAccount.address);
+            expect(stakeholders.length).to.equal(2);
         });
     });
 });

@@ -136,13 +136,6 @@ contract Dividends is Ownable {
 	}
 
 	/**
-    * @dev Getter for total amount of dividends in the pool corresponding to the current shares allocation.
-    */
-	function getCurrentPool() public view returns (uint256) {
-		return getTotalBalance() - unclaimedTotal - undistributedTotal;
-	}
-
-	/**
     * @dev Getter for total amount of undistributed dividends.
     */
 	function getUndistributed() external view returns (uint256) {
