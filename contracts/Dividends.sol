@@ -175,11 +175,8 @@ contract Dividends is Ownable {
 			revert InsufficientShareAmount(availableShares, _shares);
 		}
 
-		uint256 pool = getCurrentPool();
-		if (pool > 0) {
-			distributeUnclaimed();
-			csaTotal = 0;
-		}
+		distributeUnclaimed();
+		csaTotal = 0;
 
 		if (stakeholders[_address].shares > 0) {
 			changeStakeholderShares(_address, _shares);

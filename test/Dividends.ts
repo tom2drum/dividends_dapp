@@ -283,6 +283,34 @@ describe('Dividends', function() {
             const undistributedTotal = await contractToken.getUndistributed();
             expect(undistributedTotal).to.equal(5_000);
         });
+
+        it('are tracked correctly on subsequent calls when all shares in allocation was sold', async() => {
+            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
+            await contractToken.registerShares(firstAccount.address, 10);
+            await contractToken.registerShares(secondAccount.address, 40);
+
+            await depositDividends(10_000);
+            await contractToken.connect(firstAccount).claim();
+            await contractToken.connect(secondAccount).claim();
+
+            await contractToken.registerShares(thirdAccount.address, 50);
+            await depositDividends(2_000);
+            await contractToken.connect(firstAccount).claim();
+            await contractToken.connect(secondAccount).claim();
+            await contractToken.connect(thirdAccount).claim();
+
+            let undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(5_000);
+
+            await contractToken.registerShares(thirdAccount.address, 40);
+            await depositDividends(5_000);
+            await contractToken.connect(firstAccount).claim();
+            await contractToken.connect(secondAccount).claim();
+            await contractToken.connect(thirdAccount).claim();
+
+            undistributedTotal = await contractToken.getUndistributed();
+            expect(undistributedTotal).to.equal(5_500);
+        });
     });
 
     describe('shares', () => {
