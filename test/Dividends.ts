@@ -295,8 +295,8 @@ describe('Dividends', function() {
 
             await contractToken.registerShares(secondAccount.address, SHARES.second);
 
-            expect(await contractToken.connect(firstAccount).getStakeholderShares()).to.equal(SHARES.first);
-            expect(await contractToken.connect(secondAccount).getStakeholderShares()).to.equal(SHARES.second);
+            expect(await contractToken.connect(firstAccount)['getStakeholderShares()']()).to.equal(SHARES.first);
+            expect(await contractToken.connect(secondAccount)['getStakeholderShares()']()).to.equal(SHARES.second);
             expect(await contractToken.getSoldShares()).to.equal(SHARES.first + SHARES.second);
         });
 
@@ -315,7 +315,7 @@ describe('Dividends', function() {
                 .to.emit(contractToken, 'StakeholdersShareChanged')
                 .withArgs(secondAccount.address, SHARES.second - 1);
 
-            expect(await contractToken.connect(secondAccount).getStakeholderShares()).to.equal(SHARES.second - 1);
+            expect(await contractToken.connect(secondAccount)['getStakeholderShares()']()).to.equal(SHARES.second - 1);
             expect(await contractToken.getSoldShares()).to.equal(SHARES.first + SHARES.second - 1);
         });
 
@@ -337,7 +337,7 @@ describe('Dividends', function() {
             await contractToken.registerShares(firstAccount.address, 0);
 
             await expect(depositDividends(10_000)).to.be.revertedWith('NotEnoughStakeholders(1, 2)');
-            await expect(contractToken.connect(firstAccount).getStakeholderShares()).to.be.revertedWith('UnauthorizedRequest()');
+            await expect(contractToken.connect(firstAccount)['getStakeholderShares()']()).to.be.revertedWith('UnauthorizedRequest()');
         });
 
         it('should not register a stakeholder with empty share', async() => {
@@ -370,9 +370,9 @@ describe('Dividends', function() {
 
             await contractToken.registerShares(firstAccount.address, SHARES.first);
 
-            await expect(contractToken.getStakeholderShares()).to.be.revertedWith('UnauthorizedRequest()');
+            await expect(contractToken['getStakeholderShares()']()).to.be.revertedWith('UnauthorizedRequest()');
 
-            const shares = await contractToken.connect(firstAccount).getStakeholderShares();
+            const shares = await contractToken.connect(firstAccount)['getStakeholderShares()']();
             expect(shares).to.equal(SHARES.first);
         });
 
