@@ -2,6 +2,10 @@
 	"name": "dividends-dapp",
 	"version": "0.1.0",
 	"private": true,
+	"engines": {
+		"node": ">=12",
+		"npm": ">=6.7"
+	},
 	"dependencies": {
 		"@openzeppelin/contracts": "^4.5.0",
 		"@testing-library/jest-dom": "^5.16.2",
@@ -10,25 +14,29 @@
 		"@types/jest": "^27.4.1",
 		"@types/react": "^17.0.41",
 		"@types/react-dom": "^17.0.14",
+		"envfile": "^6.17.0",
 		"eslint-config-react-app": "^7.0.0",
 		"eslint-import-resolver-typescript": "^2.5.0",
+		"ethers": "^5.6.2",
 		"hardhat-watcher": "^2.1.1",
 		"husky": "^7.0.4",
 		"lint-staged": "^12.3.6",
 		"react": "^17.0.2",
 		"react-dom": "^17.0.2",
 		"react-scripts": "5.0.0",
+		"reactstrap": "^9.0.1",
 		"web-vitals": "^2.1.4"
 	},
 	"scripts": {
-		"start": "react-scripts start",
-		"build": "react-scripts build",
-		"test:ui": "react-scripts test",
-		"test:contracts": "./node_modules/.bin/hardhat test",
-		"test:contracts:watch": "./node_modules/.bin/hardhat watch test",
-		"eject": "react-scripts eject",
-		"compile": "./node_modules/.bin/hardhat compile",
-		"code-coverage": "./node_modules/.bin/hardhat coverage"
+		"ui:start": "react-scripts start",
+		"ui:build": "react-scripts build",
+		"ui:test": "react-scripts test",
+		"network:up": "hardhat node",
+		"contract:compile": "hardhat compile",
+		"contract:deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+		"contract:test": "hardhat test",
+		"contract:test:watch": "hardhat watch test",
+		"contract:code-coverage": "hardhat coverage"
 	},
 	"browserslist": {
 		"production": [
@@ -63,7 +71,6 @@
 		"eslint-plugin-prettier": "^3.4.1",
 		"eslint-plugin-promise": "^5.2.0",
 		"ethereum-waffle": "^3.4.0",
-		"ethers": "^5.6.1",
 		"hardhat": "^2.9.1",
 		"hardhat-gas-reporter": "^1.0.8",
 		"prettier": "^2.6.0",

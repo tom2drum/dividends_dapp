@@ -26,9 +26,9 @@ jobs:
             - name: Install dependencies
               run: npm ci
             - name: Compile contracts
-              run: npm run compile
+              run: npm run contract:compile
             - name: Run coverage script
-              run: npm run code-coverage
+              run: npm run contract:code-coverage
             - name: Generate code coverage report
               uses: romeovs/lcov-reporter-action@v0.2.11
               with:

@@ -1,13 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-// eslint-disable-next-line node/no-missing-import
-import App from './App';
+import App from './react/components/App/App';
+import { AppContextProvider } from './react/contexts/app';
+import { NotificationContextProvider } from './react/contexts/notification';
 
 ReactDOM.render(
     <React.StrictMode>
-        <App />
+        <NotificationContextProvider>
+            <AppContextProvider>
+                <App/>
+            </AppContextProvider>
+        </NotificationContextProvider>
     </React.StrictMode>,
-    // eslint-disable-next-line no-undef
-    window.document.getElementById('root')
+    window.document.getElementById('root'),
 );

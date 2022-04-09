@@ -31,6 +31,6 @@ jobs:
             - name: Install dependencies
               run: npm ci
             - name: Compile contracts
-              run: npm run compile
+              run: npm run contract:compile
             - name: Run test script
-              run: npm run test:contracts
+              run: npm run contract:test
