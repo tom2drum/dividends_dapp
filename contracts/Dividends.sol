@@ -22,29 +22,27 @@ import "hardhat/console.sol";
 *	add a new one even when some dividends were deposited and partly claimed. 
 *
 *	The contract also accumulate the part of the dividends that was not distributed among parties due to
-*	incomplete shares allocation. The owner can withdraw this amount of money at any given point.
+*	incomplete shares allocation. The owner can withdraw this amount of money at any time.
  */
 contract Dividends is Ownable {
 
 	/// @dev Stakeholder structure that holds info about registered stakeholder.
 	struct Stakeholder {
 		uint16 shares; /// @dev Current amount of shares.
-		uint unclaimedTotal; /// @dev Total unclaimed amount.
-		uint lastDividendsTotal;
+		uint unclaimed; /// @dev Total unclaimed amount.
+		uint lastTimeIssued; /// @dev Dividends total when stakeholder interacted with the contract last time
 	}
 
 	mapping(address => Stakeholder) private stakeholders;
 
-	uint private dividendsTotal;
-
-	uint private payedTotal;
-	uint private undistributedTotal;
+	uint private issued;
+	uint private payed;
+	uint private undistributed;
 
 	uint16 private soldShares;
 	uint16 private immutable totalShares;
 
-	event StakeholderRegistered(address indexed _address, uint _share);
-	event StakeholdersShareChanged(address indexed _address, uint _share);
+	event StakeholdersShareSet(address indexed _address, uint _share);
 	event DividendsIssued(uint amount);
 	event DividendsReleased(address indexed recipient, uint amount);
 	event DividendsWithdrawn(uint amount);
@@ -52,8 +50,6 @@ contract Dividends is Ownable {
 	error UnauthorizedRequest();
 	error InsufficientFunds(uint available, uint requested);
 	error InsufficientShareAmount(uint16 available, uint16 requested);
-	error NotEnoughStakeholders(uint current, uint16 needed);
-	error StakeholdersLimitReached(uint8 limit);
 	error NeedsMoreThanZero();
 
 	modifier moreThanZero(uint amount) {
@@ -64,31 +60,27 @@ contract Dividends is Ownable {
     }
 
 	modifier onlySharesOwner() {
-        if(stakeholders[_msgSender()].shares == 0 && stakeholders[_msgSender()].unclaimedTotal == 0) {
+        if(stakeholders[_msgSender()].shares == 0 && stakeholders[_msgSender()].unclaimed == 0) {
 			revert UnauthorizedRequest();
 		}
         _;
     }
 
 	/**
-	* @dev Initializes the contract with appropriate amount of company's shares and maximum amount of share holders. The
-	* amount of stakeholders are limited because of unclaimed dividends distribution process while shares allocation is changing
-	* and 'run-out-of-gas' concerns.
+	* @dev Initializes the contract with appropriate amount of company's shares.
 	* @param _totalShares Total amount of shares that can be sold.
 	*/
 	constructor(uint16 _totalShares) moreThanZero(_totalShares) {
-		require(_totalShares > 1, "Shares amount is too low");
-
 		totalShares = _totalShares;
 	}
 
 	/**
-    * @dev The contract is able to receive ETH, but only if there is enough eligible stakeholders.
+    * @dev The contract is able to receive ETH as dividends payment.
 	* The received amount will be logged with { DividendsIssued } event.
     */
 	receive() external payable virtual onlyOwner {
-		undistributedTotal += msg.value * (getTotalShares() - getSoldShares()) / getTotalShares();
-		dividendsTotal += msg.value;
+		undistributed += msg.value * (getTotalShares() - getSoldShares()) / getTotalShares();
+		issued += msg.value;
 
 		emit DividendsIssued(msg.value);
 	}
@@ -116,7 +108,7 @@ contract Dividends is Ownable {
 	* @return uint Total amount to claim
     */
 	function getAmountToClaim() public view onlySharesOwner returns (uint) {
-		return stakeholders[_msgSender()].unclaimedTotal + calculateUnclaimed(_msgSender());
+		return stakeholders[_msgSender()].unclaimed + calculateUnclaimed(_msgSender());
 	}
 
 	/**
@@ -149,53 +141,51 @@ contract Dividends is Ownable {
 	* @return unit Undistributed dividends
     */
 	function getUndistributed() external view returns (uint) {
-		return undistributedTotal;
+		return undistributed;
 	}
 
 	/**
     * @dev Getter for overall amount of ETH payed to stakeholders
 	* @return uint Total payed amount
     */
-	function getPayedTotal() external view returns (uint) {
-		return payedTotal;
+	function getPayed() external view returns (uint) {
+		return payed;
 	}
 
 	/**
-    * @dev Initiate process of new shares registration. Note that it can be run only by the contract
+    * @dev Register shares for provided address. Note that it can be run only by the contract
 	* owner and on behalf of any other network address. If the provided address has been already registered, 
-	* then its corresponding shares will be overridden with the given amount and the { StakeholdersShareChanged } event
-	* will be logged. If it is not the case, then the new stakeholder will be created and { StakeholderRegistered } event
+	* then its corresponding shares will be overridden with the given amount and the { StakeholdersShareSet } event
+	* will be logged. If it is not the case, then the new stakeholder will be created and { StakeholdersShareSet } event
 	* will be emitted. Note that the owner can delete a stakeholder using this method by providing zero as desirable amount
 	* of shares.
 	* @param _address Stakeholder address
 	* @param _shares New shares amount
     */
-	function registerShares(address _address, uint16 _shares) external onlyOwner {
+	function setShares(address _address, uint16 _shares) external onlyOwner {
 		require(owner() != _address, "Owner cannot be a stakeholder");
-
-		if(stakeholders[_address].shares == 0) {
-			if(_shares == 0) {
-				revert("Shares cannot be zero");
-			}
-		}
 
 		uint16 availableShares = getTotalShares() - getSoldShares() + stakeholders[_address].shares;
 		if (availableShares < _shares) {
 			revert InsufficientShareAmount(availableShares, _shares);
 		}
 
-		if (stakeholders[_address].shares > 0) {
-			changeStakeholderShares(_address, _shares);
-		} else {
-			addStakeholder(_address, _shares);
+		if (stakeholders[_address].shares == 0 && _shares == 0) {
+			revert NeedsMoreThanZero();
 		}
+
+		soldShares = soldShares - stakeholders[_address].shares + _shares;
+
+		stakeholders[_address].unclaimed = stakeholders[_address].shares == 0 ? 0 : calculateUnclaimed(_address);
+		stakeholders[_address].lastTimeIssued = issued;
+		stakeholders[_address].shares = _shares;
+
+		emit StakeholdersShareSet(_address, stakeholders[_address].shares);
 	}
 
 	/**
 	* @dev Triggers the transfer to the message sender account of all ETH that the sender haven't claimed yet
-	* during previous dividends issues. The amount is calculated according to the percentage of the sender's shares
-	* in each share allocation step and his previous withdrawals. { DividendsReleased } event is logged as a result of
-	* the method call
+	* during previous dividends issues. { DividendsReleased } event is logged as a result of the method call
 	*/
 	function claim() external onlySharesOwner {
 		uint amountToPay = getAmountToClaim();
@@ -206,9 +196,9 @@ contract Dividends is Ownable {
 			revert InsufficientFunds(balance, amountToPay);
 		}
 
-		payedTotal += amountToPay;
-		stakeholders[_msgSender()].unclaimedTotal = 0;
-		stakeholders[_msgSender()].lastDividendsTotal = dividendsTotal;
+		payed += amountToPay;
+		stakeholders[_msgSender()].unclaimed = 0;
+		stakeholders[_msgSender()].lastTimeIssued = issued;
 		(bool success, ) = _msgSender().call{ value: amountToPay }("");
 
 		require(success, "Failed to send dividends");
@@ -220,51 +210,22 @@ contract Dividends is Ownable {
 	* @dev Triggers the transfer of all not distributed dividends to the owner's account and emits { DividendsWithdrawn } event
 	*/
 	function withdrawUndistributed() external onlyOwner {
-		require(undistributedTotal > 0, "Nothing to withdraw");
-		assert(getTotalBalance()  >= undistributedTotal);
+		require(undistributed > 0, "Nothing to withdraw");
+		assert(getTotalBalance()  >= undistributed);
 		
-		(bool sent, ) = _msgSender().call{ value: undistributedTotal }("");
+		(bool sent, ) = _msgSender().call{ value: undistributed }("");
 
 		require(sent, "Failed to withdraw dividends");
 
-		emit DividendsWithdrawn(undistributedTotal);
-		undistributedTotal = 0;
-	}
-
-	/**
-	* @dev Adds a new stakeholder to the contract
-	* @param _address Stakeholder address
-	* @param _shares Shares amount
-	*/
-	function addStakeholder(address _address, uint16 _shares) private {
-		Stakeholder memory stakeholder = Stakeholder({ shares: _shares, unclaimedTotal: 0, lastDividendsTotal: dividendsTotal });
-		stakeholders[_address] = stakeholder;
-		soldShares += _shares;
-
-		emit StakeholderRegistered(_address, _shares);
-	}
-
-	/**
-	* @dev Modifies an existing stakeholder's share amount or delete it completely
-	* @param _address Stakeholder address
-	* @param _shares Shares amount
-	*/
-	function changeStakeholderShares(address _address, uint16 _shares) private {
-
-		soldShares = soldShares - stakeholders[_address].shares + _shares;
-
-		stakeholders[_address].unclaimedTotal = calculateUnclaimed(_address);
-		stakeholders[_address].lastDividendsTotal = dividendsTotal;
-		stakeholders[_address].shares = _shares;
-
-		emit StakeholdersShareChanged(_address, stakeholders[_address].shares);
+		emit DividendsWithdrawn(undistributed);
+		undistributed = 0;
 	}
 
 	function calculateUnclaimed(address _address) internal view returns (uint) {
-		if(stakeholders[_address].lastDividendsTotal == dividendsTotal) {
+		if(stakeholders[_address].lastTimeIssued == issued) {
 			return 0;
 		}
 
-		return stakeholders[_address].shares * (dividendsTotal - stakeholders[_address].lastDividendsTotal) / totalShares;
+		return stakeholders[_address].shares * (issued - stakeholders[_address].lastTimeIssued) / totalShares;
 	}
 }
