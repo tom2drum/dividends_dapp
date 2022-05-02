@@ -34,8 +34,7 @@ const RevealValue = <Value extends any, Response extends any>({ value, method, a
             if(address) {
                 const signer = provider?.getSigner();
                 const sigherAddress = await signer?.getAddress();
-    
-                if(sigherAddress !== address) {
+                if(sigherAddress?.toLowerCase() !== address.toLowerCase()) {
                     await sleep(500);
                     throw new Error('Unauthorized request');
                 }

@@ -59,7 +59,7 @@ const MainInfo = () => {
                     </td>
                     <td className="col-2">
                         <RevealValue<string, BigNumber>
-                            method={ contract?.getPayedTotal }
+                            method={ contract?.getPayed }
                             value={ payed }
                             onSuccess={ handlePayedRevealSuccess }
                         >

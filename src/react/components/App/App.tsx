@@ -8,6 +8,7 @@ import StakeholdersList from '../StakeholdersList/StakeholdersList';
 import FormIssueDividends from '../FormIssueDividends/FormIssueDividends';
 import Notification from '../Notification/Notification';
 import { useAppContext } from '../../contexts/app';
+import { ACCOUNTS } from '../../../consts';
 
 import styles from './App.module.css';
 
@@ -15,12 +16,19 @@ function App() {
     const { contract, setStakeholders } = useAppContext();
 
     React.useEffect(() => {
-        contract?.getStakeholders()
-            .then((addresses: Array<string>) => {
-                const stakeholders = addresses.map((address) => ({ address }));
-                setStakeholders(stakeholders);
-            })
-            .catch(console.error);
+        async function fetchAccounts() {
+            return await Promise.all(
+                ACCOUNTS.map((account) => contract?.['getStakeholderShares(address)'](account).catch(() => {})),
+            );
+        }
+        fetchAccounts().then((sharesResult) => {
+            ACCOUNTS.forEach((address, index) => {
+                const shares = sharesResult[index]?.toNumber();
+                if(shares) {
+                    setStakeholders([ { address, shares: shares } ]);
+                }
+            });
+        });
     }, [ contract, setStakeholders ]);
 
     return (
