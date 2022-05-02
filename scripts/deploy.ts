@@ -5,7 +5,7 @@ import { parse, stringify } from 'envfile';
 
 async function main() {
     const Dividends = await ethers.getContractFactory('Dividends');
-    const contractToken = await Dividends.deploy(MAX_SHARES_NUM, 20);
+    const contractToken = await Dividends.deploy(MAX_SHARES_NUM);
 
     await contractToken.deployed();
 

@@ -22,7 +22,7 @@ const ClaimButton = ({ address, unclaimed }: Props) => {
             const signer = provider?.getSigner();
             const sigherAddress = await signer?.getAddress();
 
-            if (sigherAddress !== address) {
+            if (sigherAddress?.toLowerCase() !== address.toLowerCase()) {
                 await sleep(500);
                 throw new Error('Unauthorized request');
             }
@@ -35,7 +35,7 @@ const ClaimButton = ({ address, unclaimed }: Props) => {
             openNotification({ status: 'success', text: 'Dividends released' });
             updateStakeholder({ address, unclaimed: '0.0' });
 
-            const payed = await contract?.getPayedTotal();
+            const payed = await contract?.getPayed();
             if (payed) updatePayedAmount(utils.formatEther(payed));
 
         } catch (error: any) {
