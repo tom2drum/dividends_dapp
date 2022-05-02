@@ -8,7 +8,7 @@ let contractToken: Dividends;
 
 beforeEach(async() => {
     const Dividends = await ethers.getContractFactory('Dividends');
-    contractToken = await Dividends.deploy(SHARES.first + SHARES.second, 10);
+    contractToken = await Dividends.deploy(SHARES.first + SHARES.second);
     await contractToken.deployed();
 });
 
@@ -16,12 +16,7 @@ describe('Dividends', function() {
     describe('deploy', () => {
         it('will not deploy contract with invalid share amount', async() => {
             const Dividends = await ethers.getContractFactory('Dividends');
-            await expect(Dividends.deploy(1, 10)).to.be.revertedWith('Shares amount is too low');
-        });
-
-        it('will not deploy contract with invalid max stakeholders number', async() => {
-            const Dividends = await ethers.getContractFactory('Dividends');
-            await expect(Dividends.deploy(100, 30)).to.be.revertedWith('Stakeholders limit violated');
+            await expect(Dividends.deploy(1)).to.be.revertedWith('Shares amount is too low');
         });
     });
 
@@ -44,18 +39,6 @@ describe('Dividends', function() {
             dividends = await contractToken.getTotalBalance();
             expect(dividends).to.equal(20_000);
         });
-
-        it('will add dividends only if there is more than one stakeholder', async() => {
-            const { firstAccount } = await getAccounts();
-
-            let tr = depositDividends(10_000);
-            await expect(tr).to.be.revertedWith('NotEnoughStakeholders(0, 2)');
-
-            await contractToken.registerShares(firstAccount.address, SHARES.first);
-
-            tr = depositDividends(10_000);
-            await expect(tr).to.be.revertedWith('NotEnoughStakeholders(1, 2)');
-        });
     });
 
     describe('claim process', () => {
@@ -70,7 +53,6 @@ describe('Dividends', function() {
             const { thirdAccount } = await getAccounts();
             await registerAccountsAndAddDividends();
             const tx = contractToken.connect(thirdAccount).getAmountToClaim();
-
             await expect(tx).to.be.revertedWith('UnauthorizedRequest()');
         });
 
@@ -214,13 +196,14 @@ describe('Dividends', function() {
                 const { firstAccount, secondAccount } = await getAccounts();
                 await contractToken.registerShares(firstAccount.address, 10);
                 await contractToken.registerShares(secondAccount.address, 40);
-                await depositDividends(10_000);
+                await depositDividends(10_000); // A1: 1_000, A2: 4_000
 
                 await contractToken.connect(firstAccount).claim();
-                await depositDividends(5_000);
 
-                await contractToken.registerShares(firstAccount.address, 20);
-                await depositDividends(5_000);
+                await depositDividends(5_000); // A1: 500, A2: 2_000
+                
+                await contractToken.registerShares(firstAccount.address, 20); 
+                await depositDividends(5_000); // A1: 1_000, A2: 2_000
             });
 
             it('calculates correct unclaimed amounts for each stakeholder and rest of the balance is correct', async() => {
@@ -230,7 +213,7 @@ describe('Dividends', function() {
                 await expect(tx11).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 1_500);
                 await expect(tx11).to.changeEtherBalance(firstAccount, 1_500);
 
-                await depositDividends(10_000);
+                await depositDividends(10_000); // A1: 2_000, A2: 4_000
 
                 const tx12 = await contractToken.connect(firstAccount).claim();
                 await expect(tx12).to.emit(contractToken, 'DividendsReleased').withArgs(firstAccount.address, 2_000);
@@ -372,11 +355,10 @@ describe('Dividends', function() {
                 await contractToken.registerShares(secondAccount.address, SHARES.second);
                 await contractToken.registerShares(firstAccount.address, 0);
     
-                await expect(depositDividends(10_000)).to.be.revertedWith('NotEnoughStakeholders(1, 2)');
                 await expect(contractToken.connect(firstAccount)['getStakeholderShares()']()).to.be.revertedWith('UnauthorizedRequest()');
             });
 
-            it('will add unclaimed amount to undistributed dividends', async() => {
+            it('stakeholder can claim his money even after his shares zeroed', async() => {
                 const { firstAccount, secondAccount } = await getAccounts();
     
                 await contractToken.registerShares(firstAccount.address, SHARES.first);
@@ -384,8 +366,16 @@ describe('Dividends', function() {
                 await depositDividends(10_000);
                 await contractToken.registerShares(firstAccount.address, 0);
 
-                const undistributedTotal = await contractToken.getUndistributed();
-                expect(undistributedTotal).to.equal(8_000);
+                const unclaimed = await contractToken.connect(firstAccount).getAmountToClaim();
+                expect(unclaimed).to.equal(8_000);
+
+                const tx = await contractToken.connect(firstAccount).claim();
+                expect(tx)
+                    .to.emit(contractToken, 'DividendsReleased')
+                    .withArgs(firstAccount.address, 8_000);
+                expect(tx).to.changeEtherBalance(firstAccount, 8_000);
+
+                await expect(contractToken.connect(firstAccount).getAmountToClaim()).to.be.revertedWith('UnauthorizedRequest()');
             });
         });
 
@@ -394,17 +384,6 @@ describe('Dividends', function() {
             const { firstAccount } = await getAccounts();
 
             await expect(contractToken.registerShares(firstAccount.address, 0)).to.be.revertedWith('Shares cannot be zero');
-        });
-
-        it('should not register new stakeholder when limit has reached', async() => {
-            const Dividends = await ethers.getContractFactory('Dividends');
-            const contractToken = await Dividends.deploy(SHARES.first + SHARES.second, 2);
-            await contractToken.deployed();
-            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
-            await contractToken.registerShares(firstAccount.address, 10);
-            await contractToken.registerShares(secondAccount.address, 10);
-
-            await expect(contractToken.registerShares(thirdAccount.address, 10)).to.be.revertedWith('StakeholdersLimitReached(2)');
         });
 
         it('should not register new stakeholder when all available shares are sold', async() => {
@@ -456,19 +435,6 @@ describe('Dividends', function() {
 
             expect(soldShares).to.equal(SHARES.first);
             expect(totalShares).to.equal(SHARES.first + SHARES.second);
-        });
-
-        it('anyone can see the list of registered stakeholders', async() => {
-            const { firstAccount, secondAccount, thirdAccount } = await getAccounts();
-
-            await contractToken.registerShares(firstAccount.address, SHARES.first);
-            await contractToken.registerShares(secondAccount.address, SHARES.second);
-
-            const stakeholders = await contractToken.connect(thirdAccount).getStakeholders();
-
-            expect(stakeholders[0]).to.equal(firstAccount.address);
-            expect(stakeholders[1]).to.equal(secondAccount.address);
-            expect(stakeholders.length).to.equal(2);
         });
     });
 });
