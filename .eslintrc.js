@@ -25,6 +25,7 @@ module.exports = {
         },
     },
     rules: {
+        'node/no-unpublished-import': 'off',
         'indent': 'off',
         semi: [ 'error', 'always' ],
         'node/no-unsupported-features/es-syntax': [ 'error', { ignores: [ 'modules' ] } ],

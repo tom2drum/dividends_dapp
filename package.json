@@ -6,6 +6,17 @@
 		"node": ">=12",
 		"npm": ">=6.7"
 	},
+	"scripts": {
+		"ui:start": "react-scripts start",
+		"ui:build": "react-scripts build",
+		"ui:test": "react-scripts test",
+		"network:up": "hardhat node",
+		"contract:compile": "hardhat compile",
+		"contract:deploy:local": "hardhat deploy --network localhost",
+		"contract:test": "hardhat test",
+		"contract:test:watch": "hardhat watch test",
+		"contract:code-coverage": "hardhat coverage"
+	},
 	"dependencies": {
 		"@openzeppelin/contracts": "^4.5.0",
 		"@testing-library/jest-dom": "^5.16.2",
@@ -26,17 +37,6 @@
 		"react-scripts": "5.0.0",
 		"reactstrap": "^9.0.1",
 		"web-vitals": "^2.1.4"
-	},
-	"scripts": {
-		"ui:start": "react-scripts start",
-		"ui:build": "react-scripts build",
-		"ui:test": "react-scripts test",
-		"network:up": "hardhat node",
-		"contract:compile": "hardhat compile",
-		"contract:deploy:local": "hardhat run scripts/deploy.ts --network localhost",
-		"contract:test": "hardhat test",
-		"contract:test:watch": "hardhat watch test",
-		"contract:code-coverage": "hardhat coverage"
 	},
 	"browserslist": {
 		"production": [
@@ -62,6 +62,7 @@
 		"@typescript-eslint/eslint-plugin": "^4.33.0",
 		"@typescript-eslint/parser": "^4.33.0",
 		"chai": "^4.3.6",
+		"chai-ethers": "0.0.1",
 		"dotenv": "^10.0.0",
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.5.0",
@@ -72,6 +73,8 @@
 		"eslint-plugin-promise": "^5.2.0",
 		"ethereum-waffle": "^3.4.0",
 		"hardhat": "^2.9.1",
+		"hardhat-deploy": "^0.11.4",
+		"hardhat-deploy-ethers": "^0.3.0-beta.13",
 		"hardhat-gas-reporter": "^1.0.8",
 		"prettier": "^2.6.0",
 		"prettier-plugin-solidity": "^1.0.0-beta.19",
