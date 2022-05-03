@@ -8,7 +8,7 @@ let contractToken: Dividends;
 
 beforeEach(async() => {
     const Dividends = await ethers.getContractFactory('Dividends');
-    contractToken = await Dividends.deploy(SHARES.first + SHARES.second);
+    contractToken = await Dividends.deploy(SHARES.first + SHARES.second) as Dividends;
     await contractToken.deployed();
 });
 

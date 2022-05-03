@@ -7,7 +7,8 @@ import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 import 'hardhat-watcher';
-import 'solidity-coverage';
+import 'hardhat-deploy';
+import 'hardhat-deploy-ethers';
 
 dotenv.config();
 
@@ -34,6 +35,9 @@ const config: HardhatUserConfig = {
         hardhat: {
             chainId: 1337,
         },
+    },
+    namedAccounts: {
+        deployer: 0,
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS !== undefined,
